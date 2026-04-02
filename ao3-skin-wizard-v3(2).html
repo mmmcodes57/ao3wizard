@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AO3 Skin Wizard</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#edede9; color:#2c2c2a; font-family:'Times New Roman',Times,serif; font-size:14px; height:100vh; overflow:hidden; }
+.app { display:flex; flex-direction:column; height:100vh; }
+
+.topbar { background:#f5ebe0; border-bottom:1px solid #d6ccc2; padding:8px 20px; display:flex; align-items:center; gap:16px; flex-shrink:0; flex-wrap:wrap; }
+.topbar h1 { font-size:17px; font-weight:normal; white-space:nowrap; }
+.topbar h1 em { font-style:italic; color:#9c7e6c; }
+.mode-btns { display:flex; gap:6px; }
+.mode-btn { padding:3px 10px; border:1px solid #d6ccc2; background:none; font-family:'Times New Roman',Times,serif; font-size:11px; cursor:pointer; color:#6b6a68; }
+.mode-btn:hover { background:#e3d5ca; color:#2c2c2a; }
+.topbar-links { display:flex; gap:14px; margin-left:auto; align-items:center; }
+.topbar-links a { color:#9c7e6c; font-size:11px; text-decoration:none; border-bottom:1px dotted #d6ccc2; }
+
+.tabs { background:#e3d5ca; border-bottom:1px solid #d6ccc2; display:flex; flex-wrap:wrap; padding:0 12px; flex-shrink:0; }
+.tab { padding:7px 12px; background:none; border:none; font-family:'Times New Roman',Times,serif; font-size:12px; cursor:pointer; color:#6b6a68; border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap; }
+.tab:hover { color:#2c2c2a; }
+.tab.active { color:#2c2c2a; border-bottom-color:#9c7e6c; font-weight:bold; }
+
+.main { display:flex; flex:1; overflow:hidden; min-height:0; }
+
+.controls { width:300px; min-width:300px; background:#e3d5ca; border-right:1px solid #d6ccc2; overflow-y:auto; flex-shrink:0; padding:14px; }
+.panel { display:none; }
+.panel.active { display:block; }
+.sec { margin-bottom:18px; }
+.sec h3 { font-size:10px; text-transform:uppercase; letter-spacing:.09em; color:#5a5a58; margin-bottom:9px; padding-bottom:3px; border-bottom:1px solid #d6ccc2; font-weight:700; }
+.field { margin-bottom:8px; }
+.field label { display:block; font-size:11px; color:#5a5a58; margin-bottom:2px; }
+.cr { display:flex; gap:5px; align-items:center; }
+.cr input[type=color] { width:30px; height:24px; border:1px solid #d6ccc2; cursor:pointer; padding:1px; flex-shrink:0; }
+.cr input[type=text] { flex:1; padding:3px 5px; border:1px solid #d6ccc2; font-family:monospace; font-size:11px; background:#fefaf5; }
+.field input[type=text]:not(.cr *), .field input[type=number], .field select { width:100%; padding:3px 6px; border:1px solid #d6ccc2; font-family:'Times New Roman',Times,serif; font-size:12px; background:#fefaf5; }
+.field input[type=number] { width:70px; }
+.chk { display:flex; align-items:center; gap:8px; font-size:12px; margin-top:4px; }
+.hint { font-size:10px; color:#9c7e6c; margin-top:2px; }
+.sub { font-size:11px; color:#5a5a58; font-weight:700; margin:10px 0 5px; }
+.action-row { padding-top:10px; border-top:1px solid #d6ccc2; margin-top:10px; }
+.tbtn { background:none; border:none; font-family:'Times New Roman',Times,serif; font-size:12px; color:#9c7e6c; cursor:pointer; text-decoration:underline; }
+.font-note { font-size:10px; color:#9c7e6c; margin-top:3px; font-style:italic; }
+
+.preview-area { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+.prev-tabs { background:#f0e8e0; border-bottom:1px solid #d6ccc2; display:flex; flex-shrink:0; }
+.prev-tab { padding:7px 18px; background:none; border:none; font-family:'Times New Roman',Times,serif; font-size:12px; cursor:pointer; color:#6b6a68; border-bottom:2px solid transparent; }
+.prev-tab:hover { color:#2c2c2a; }
+.prev-tab.active { color:#2c2c2a; border-bottom-color:#9c7e6c; font-weight:bold; }
+.preview { flex:1; overflow-y:auto; background:#fefaf5; }
+.pview { display:none; }
+.pview.active { display:block; }
+
+.output { border-top:1px solid #d6ccc2; background:#e3d5ca; padding:8px 16px; flex-shrink:0; }
+.out-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.out-hdr span { font-size:11px; text-transform:uppercase; color:#5a5a58; letter-spacing:.06em; }
+.out-acts { display:flex; gap:12px; align-items:center; }
+.olink { background:none; border:none; font-family:'Times New Roman',Times,serif; font-size:11px; color:#9c7e6c; cursor:pointer; text-decoration:underline; }
+#gen-btn { border:1px solid #9c7e6c; padding:3px 10px; font-weight:bold; color:#2c2c2a; text-decoration:none; }
+#css-output { width:100%; height:90px; background:#fefaf5; border:1px solid #d6ccc2; padding:7px; font-family:monospace; font-size:10px; resize:vertical; display:block; }
+.note { font-size:10px; color:#5a5a58; margin-top:3px; }
+
+/* preview label dividers for "other" tab */
+.pv-section-label { font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:#9c7e6c; padding:10px 16px 4px; border-top:1px solid #d6ccc2; margin-top:4px; background:#f5ede4; }
+.pv-section-label:first-child { border-top:none; margin-top:0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <h1>AO3 Skin <em>Wizard</em></h1>
+  <div class="mode-btns">
+    <button class="mode-btn" onclick="loadLight()">light defaults</button>
+    <button class="mode-btn" onclick="loadDark()">dark defaults</button>
+  </div>
+  <div class="topbar-links">
+    <a href="https://x.com/vinsodas" target="_blank">twitter/x</a>
+    <a href="https://ko-fi.com/vinsodas" target="_blank">ko-fi</a>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" data-tab="base">Base</button>
+  <button class="tab" data-tab="header">Header</button>
+  <button class="tab" data-tab="tags">Tags</button>
+  <button class="tab" data-tab="cards">Cards</button>
+  <button class="tab" data-tab="buttons">Buttons</button>
+  <button class="tab" data-tab="comments">Comments</button>
+  <button class="tab" data-tab="work">Work</button>
+  <button class="tab" data-tab="stats">Stats</button>
+  <button class="tab" data-tab="filters">Filters</button>
+  <button class="tab" data-tab="footer">Footer &amp; UI</button>
+</div>
+
+<div class="main">
+<div class="controls">
+
+<!-- BASE -->
+<div class="panel active" id="panel-base">
+  <div class="sec"><h3>Background Gradient</h3>
+    <div class="field"><label>Top</label><div class="cr"><input type="color" id="bg-top" value="#fefefe"><input type="text" id="bg-top-hex" value="#fefefe"></div></div>
+    <div class="field"><label>Middle</label><div class="cr"><input type="color" id="bg-mid" value="#f8f8f8"><input type="text" id="bg-mid-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Bottom</label><div class="cr"><input type="color" id="bg-bot" value="#f0f0f0"><input type="text" id="bg-bot-hex" value="#f0f0f0"></div></div>
+  </div>
+  <div class="sec"><h3>Text Colors</h3>
+    <div class="field"><label>Main text</label><div class="cr"><input type="color" id="text-main" value="#333333"><input type="text" id="text-main-hex" value="#333333"></div></div>
+    <div class="field"><label>Headings</label><div class="cr"><input type="color" id="text-heading" value="#1e3a5f"><input type="text" id="text-heading-hex" value="#1e3a5f"></div></div>
+    <div class="field"><label>Links</label><div class="cr"><input type="color" id="text-link" value="#1e3a5f"><input type="text" id="text-link-hex" value="#1e3a5f"></div></div>
+    <div class="field"><label>Visited links</label><div class="cr"><input type="color" id="text-visited" value="#6b4f9c"><input type="text" id="text-visited-hex" value="#6b4f9c"></div></div>
+  </div>
+  <div class="sec"><h3>Font Family</h3>
+    <div class="field"><label>Primary font</label>
+      <select id="font-primary">
+        <option value='"Georgia","Times New Roman",serif'>Georgia (default)</option>
+        <option value='"Times New Roman",Times,serif'>Times New Roman</option>
+        <option value='"Palatino Linotype","Palatino","Book Antiqua",serif'>Palatino</option>
+        <option value='"Garamond","Adobe Garamond Pro",serif'>Garamond</option>
+        <option value='"Book Antiqua","Palatino Linotype",serif'>Book Antiqua</option>
+        <option value='"Verdana",Geneva,sans-serif'>Verdana</option>
+        <option value='"Trebuchet MS","Trebuchet",sans-serif'>Trebuchet MS</option>
+        <option value='"Arial",Helvetica,sans-serif'>Arial</option>
+        <option value='"Tahoma",Geneva,sans-serif'>Tahoma</option>
+        <option value='"Century Gothic","Avant Garde",sans-serif'>Century Gothic</option>
+        <option value='"Lucida Sans Unicode","Lucida Grande",sans-serif'>Lucida Sans</option>
+        <option value='"Courier New",Courier,monospace'>Courier New</option>
+      </select>
+      <div class="font-note">Note: font preview may vary by OS — the CSS output will apply correctly on AO3.</div>
+    </div>
+  </div>
+  <div class="sec"><h3>User Area</h3>
+    <div class="field"><label>Username color</label><div class="cr"><input type="color" id="user-color" value="#d64545"><input type="text" id="user-color-hex" value="#d64545"></div></div>
+    <div class="field"><label>User icon border</label><div class="cr"><input type="color" id="user-icon-border" value="#d64545"><input type="text" id="user-icon-border-hex" value="#d64545"></div></div>
+  </div>
+  <div class="action-row"><button class="tbtn" id="reset-btn">reset to light defaults</button></div>
+</div>
+
+<!-- HEADER -->
+<div class="panel" id="panel-header">
+  <div class="sec"><h3>Logo / Username Bar</h3>
+    <div class="hint" style="margin-bottom:6px;">The top bar with the site name and your username/post/logout links.</div>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="logo-top" value="#ffffff"><input type="text" id="logo-top-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="logo-bot" value="#f8f8f8"><input type="text" id="logo-bot-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Bottom border</label><div class="cr"><input type="color" id="logo-border" value="#e8e8e8"><input type="text" id="logo-border-hex" value="#e8e8e8"></div></div>
+  </div>
+  <div class="sec"><h3>Navigation Bar</h3>
+    <div class="hint" style="margin-bottom:6px;">The bar below the logo with Fandoms / Browse / Search / About links.</div>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="hdr-top" value="#ffffff"><input type="text" id="hdr-top-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="hdr-bot" value="#f8f8f8"><input type="text" id="hdr-bot-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Bottom border</label><div class="cr"><input type="color" id="hdr-border" value="#e8e8e8"><input type="text" id="hdr-border-hex" value="#e8e8e8"></div></div>
+  </div>
+  <div class="sec"><h3>Main Nav Emojis</h3>
+    <div class="hint" style="margin-bottom:6px;">Tip: Windows + . or Ctrl+Cmd+Space for emoji picker</div>
+    <div class="field"><label>Fandoms</label><input type="text" id="nav-fandoms" value="🎬"></div>
+    <div class="field"><label>Browse</label><input type="text" id="nav-browse" value="📂"></div>
+    <div class="field"><label>Search</label><input type="text" id="nav-search" value="🔍"></div>
+    <div class="field"><label>About/FAQ</label><input type="text" id="nav-faq" value="ℹ️"></div>
+  </div>
+  <div class="sec"><h3>Fandoms Submenu</h3>
+    <div class="field"><label>All Media</label><input type="text" id="dd-media" value="🌍"></div>
+    <div class="field"><label>Anime/Manga</label><input type="text" id="dd-anime" value="🖊️"></div>
+    <div class="field"><label>Books</label><input type="text" id="dd-books" value="📚"></div>
+    <div class="field"><label>Cartoons/Comics</label><input type="text" id="dd-cartoons" value="🖍️"></div>
+    <div class="field"><label>Celebrities/RPF</label><input type="text" id="dd-celeb" value="⭐"></div>
+    <div class="field"><label>Movies</label><input type="text" id="dd-movies" value="🎬"></div>
+    <div class="field"><label>Music/Bands</label><input type="text" id="dd-music" value="🎵"></div>
+    <div class="field"><label>Other Media</label><input type="text" id="dd-other" value="📱"></div>
+    <div class="field"><label>Theater</label><input type="text" id="dd-theater" value="🎭"></div>
+    <div class="field"><label>TV Shows</label><input type="text" id="dd-tv" value="📺"></div>
+    <div class="field"><label>Video Games</label><input type="text" id="dd-games" value="🎮"></div>
+    <div class="field"><label>Uncategorized</label><input type="text" id="dd-uncat" value="❓"></div>
+  </div>
+  <div class="sec"><h3>Browse Submenu</h3>
+    <div class="field"><label>Works</label><input type="text" id="dd-works" value="📄"></div>
+    <div class="field"><label>Bookmarks</label><input type="text" id="dd-bookmarks" value="🔖"></div>
+    <div class="field"><label>Tags</label><input type="text" id="dd-tags" value="🏷️"></div>
+    <div class="field"><label>Collections</label><input type="text" id="dd-collections" value="📂"></div>
+    <div class="field"><label>People</label><input type="text" id="dd-people" value="👥"></div>
+  </div>
+  <div class="sec"><h3>Search Submenu</h3>
+    <div class="field"><label>Works Search</label><input type="text" id="dd-wsearch" value="🔎"></div>
+    <div class="field"><label>Bookmarks Search</label><input type="text" id="dd-bsearch" value="🔖"></div>
+    <div class="field"><label>Tags Search</label><input type="text" id="dd-tsearch" value="🏷️"></div>
+    <div class="field"><label>People Search</label><input type="text" id="dd-psearch" value="👤"></div>
+  </div>
+  <div class="sec"><h3>About Submenu</h3>
+    <div class="field"><label>FAQ</label><input type="text" id="dd-faq" value="❓"></div>
+    <div class="field"><label>Donate</label><input type="text" id="dd-donate" value="💝"></div>
+    <div class="field"><label>News</label><input type="text" id="dd-news" value="📰"></div>
+    <div class="field"><label>Open Doors</label><input type="text" id="dd-opendoors" value="🚪"></div>
+    <div class="field"><label>TOS</label><input type="text" id="dd-tos" value="📜"></div>
+    <div class="field"><label>Contact</label><input type="text" id="dd-contact" value="📧"></div>
+    <div class="field"><label>Sitemap</label><input type="text" id="dd-sitemap" value="🗺️"></div>
+  </div>
+</div>
+
+<!-- TAGS -->
+<div class="panel" id="panel-tags">
+  <div class="sec"><h3>Default / Generic Tags</h3>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="def-top" value="#ffffff"><input type="text" id="def-top-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="def-bot" value="#f8f8f8"><input type="text" id="def-bot-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Border</label><div class="cr"><input type="color" id="def-border" value="#e8e8e8"><input type="text" id="def-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Text color</label><div class="cr"><input type="color" id="def-text" value="#333333"><input type="text" id="def-text-hex" value="#333333"></div></div>
+    <div class="field"><label>Border radius (px)</label><input type="number" id="tag-radius" value="20" min="0" max="30"></div>
+  </div>
+  <div class="sec"><h3>Character Tags</h3>
+    <div class="field"><label>Emoji</label><input type="text" id="char-emoji" value="👤"></div>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="char-top" value="#e8f5e8"><input type="text" id="char-top-hex" value="#e8f5e8"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="char-bot" value="#c9e6c9"><input type="text" id="char-bot-hex" value="#c9e6c9"></div></div>
+    <div class="field"><label>Border</label><div class="cr"><input type="color" id="char-border" value="#8fbc8f"><input type="text" id="char-border-hex" value="#8fbc8f"></div></div>
+    <div class="field"><label>Text color</label><div class="cr"><input type="color" id="char-text" value="#2e4e2e"><input type="text" id="char-text-hex" value="#2e4e2e"></div></div>
+  </div>
+  <div class="sec"><h3>Romantic Tags (*s*)</h3>
+    <div class="field"><label>Emoji</label><input type="text" id="rom-emoji" value="❤️"></div>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="rom-top" value="#ffeaea"><input type="text" id="rom-top-hex" value="#ffeaea"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="rom-bot" value="#ffc9c9"><input type="text" id="rom-bot-hex" value="#ffc9c9"></div></div>
+    <div class="field"><label>Border</label><div class="cr"><input type="color" id="rom-border" value="#e6a0a0"><input type="text" id="rom-border-hex" value="#e6a0a0"></div></div>
+    <div class="field"><label>Text color</label><div class="cr"><input type="color" id="rom-text" value="#8b0000"><input type="text" id="rom-text-hex" value="#8b0000"></div></div>
+  </div>
+  <div class="sec"><h3>Platonic Tags (*a*)</h3>
+    <div class="field"><label>Emoji</label><input type="text" id="plat-emoji" value="🤝"></div>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="plat-top" value="#fff9e6"><input type="text" id="plat-top-hex" value="#fff9e6"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="plat-bot" value="#f0e0a0"><input type="text" id="plat-bot-hex" value="#f0e0a0"></div></div>
+    <div class="field"><label>Border</label><div class="cr"><input type="color" id="plat-border" value="#f0c864"><input type="text" id="plat-border-hex" value="#f0c864"></div></div>
+    <div class="field"><label>Text color</label><div class="cr"><input type="color" id="plat-text" value="#8b7500"><input type="text" id="plat-text-hex" value="#8b7500"></div></div>
+  </div>
+  <div class="sec"><h3>Freeform Tags</h3>
+    <div class="field"><label>Emoji</label><input type="text" id="free-emoji" value="🏷️"></div>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="free-top" value="#f8f4e8"><input type="text" id="free-top-hex" value="#f8f4e8"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="free-bot" value="#e8e0d0"><input type="text" id="free-bot-hex" value="#e8e0d0"></div></div>
+    <div class="field"><label>Border</label><div class="cr"><input type="color" id="free-border" value="#d8d0c0"><input type="text" id="free-border-hex" value="#d8d0c0"></div></div>
+    <div class="field"><label>Text color</label><div class="cr"><input type="color" id="free-text" value="#654321"><input type="text" id="free-text-hex" value="#654321"></div></div>
+  </div>
+  <div class="sec"><h3>Required Tag Emojis</h3>
+    <div class="sub">Ratings</div>
+    <div class="field"><label>General Audience</label><input type="text" id="rt-general" value="🆒"></div>
+    <div class="field"><label>Teen</label><input type="text" id="rt-teen" value="🆗"></div>
+    <div class="field"><label>Mature</label><input type="text" id="rt-mature" value="🛑"></div>
+    <div class="field"><label>Explicit</label><input type="text" id="rt-explicit" value="🔞"></div>
+    <div class="field"><label>Not Rated</label><input type="text" id="rt-notrated" value="❓"></div>
+    <div class="sub">Categories</div>
+    <div class="field"><label>Gen</label><input type="text" id="rt-gen" value="🤗"></div>
+    <div class="field"><label>F/M</label><input type="text" id="rt-het" value="👩‍❤️‍💋‍👨"></div>
+    <div class="field"><label>M/M</label><input type="text" id="rt-slash" value="👨‍❤️‍💋‍👨"></div>
+    <div class="field"><label>F/F</label><input type="text" id="rt-femslash" value="👩‍❤️‍💋‍👩"></div>
+    <div class="field"><label>Multi</label><input type="text" id="rt-multi" value="🥰"></div>
+    <div class="field"><label>Other</label><input type="text" id="rt-other" value="❓"></div>
+    <div class="field"><label>None</label><input type="text" id="rt-none" value="⬛"></div>
+    <div class="sub">Warnings</div>
+    <div class="field"><label>Warnings Apply</label><input type="text" id="rt-warn-yes" value="⚠️"></div>
+    <div class="field"><label>No Warnings</label><input type="text" id="rt-warn-no" value="✅"></div>
+    <div class="field"><label>Choose Not To Warn</label><input type="text" id="rt-warn-cntw" value="❓"></div>
+    <div class="sub">Status</div>
+    <div class="field"><label>Complete</label><input type="text" id="rt-complete" value="✅"></div>
+    <div class="field"><label>In-Progress</label><input type="text" id="rt-wip" value="⏳"></div>
+    <div class="field"><label>External Work</label><input type="text" id="rt-external" value="🔗"></div>
+  </div>
+</div>
+
+<!-- CARDS -->
+<div class="panel" id="panel-cards">
+  <div class="sec"><h3>Card / Blurb Styling</h3>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="card-top" value="#ffffff"><input type="text" id="card-top-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="card-bot" value="#f8f8f8"><input type="text" id="card-bot-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Border color</label><div class="cr"><input type="color" id="card-border" value="#e8e8e8"><input type="text" id="card-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Border radius (px)</label><input type="number" id="card-radius" value="15" min="0" max="30"></div>
+  </div>
+  <div class="sec"><h3>Author Name Gradient</h3>
+    <div class="field"><label>Color 1</label><div class="cr"><input type="color" id="author-c1" value="#ff6b6b"><input type="text" id="author-c1-hex" value="#ff6b6b"></div></div>
+    <div class="field"><label>Color 2</label><div class="cr"><input type="color" id="author-c2" value="#ffd93d"><input type="text" id="author-c2-hex" value="#ffd93d"></div></div>
+  </div>
+  <div class="sec"><h3>Blurb Icon</h3>
+    <div class="field"><label>Replace 📖 with</label><input type="text" id="blurb-icon" value="📖"></div>
+  </div>
+  <div class="sec"><h3>Form Elements</h3>
+    <div class="field"><label>Input background</label><div class="cr"><input type="color" id="input-bg" value="#ffffff"><input type="text" id="input-bg-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Input text color</label><div class="cr"><input type="color" id="input-text" value="#333333"><input type="text" id="input-text-hex" value="#333333"></div></div>
+    <div class="field"><label>Input border</label><div class="cr"><input type="color" id="input-border" value="#e8e8e8"><input type="text" id="input-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Border radius (px)</label><input type="number" id="input-radius" value="10" min="0" max="20"></div>
+    <div class="field"><label>Focus outline color</label><div class="cr"><input type="color" id="focus-color" value="#cccccc"><input type="text" id="focus-color-hex" value="#cccccc"></div></div>
+    <div class="field"><label>Focus style</label><select id="focus-style"><option value="dotted">dotted</option><option value="solid">solid</option><option value="dashed">dashed</option></select></div>
+  </div>
+  <div class="sec"><h3>Errors and Required</h3>
+    <div class="field"><label>Required text color</label><div class="cr"><input type="color" id="req-color" value="#b33939"><input type="text" id="req-color-hex" value="#b33939"></div></div>
+    <div class="field"><label>Error text color</label><div class="cr"><input type="color" id="err-color" value="#d64545"><input type="text" id="err-color-hex" value="#d64545"></div></div>
+    <div class="field"><label>Invalid field border</label><div class="cr"><input type="color" id="invalid-border" value="#d64545"><input type="text" id="invalid-border-hex" value="#d64545"></div></div>
+    <div class="field"><label>Notice background</label><div class="cr"><input type="color" id="notice-bg" value="#f8f8f8"><input type="text" id="notice-bg-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Notice border</label><div class="cr"><input type="color" id="notice-border" value="#e8e8e8"><input type="text" id="notice-border-hex" value="#e8e8e8"></div></div>
+  </div>
+</div>
+
+<!-- BUTTONS -->
+<div class="panel" id="panel-buttons">
+  <div class="sec"><h3>Default Button</h3>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="btn-top" value="#f8f8f8"><input type="text" id="btn-top-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="btn-bot" value="#f0f0f0"><input type="text" id="btn-bot-hex" value="#f0f0f0"></div></div>
+    <div class="field"><label>Text color</label><div class="cr"><input type="color" id="btn-text" value="#333333"><input type="text" id="btn-text-hex" value="#333333"></div></div>
+    <div class="field"><label>Border color</label><div class="cr"><input type="color" id="btn-border" value="#e8e8e8"><input type="text" id="btn-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Border radius (px)</label><input type="number" id="btn-radius" value="12" min="0" max="30"></div>
+  </div>
+  <div class="sec"><h3>Hover State</h3>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="btn-hov-top" value="#e8e8e8"><input type="text" id="btn-hov-top-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="btn-hov-bot" value="#f0f0f0"><input type="text" id="btn-hov-bot-hex" value="#f0f0f0"></div></div>
+    <div class="field"><label>Text color</label><div class="cr"><input type="color" id="btn-hov-text" value="#1e3a5f"><input type="text" id="btn-hov-text-hex" value="#1e3a5f"></div></div>
+  </div>
+  <div class="sec"><h3>Active / Current State</h3>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="btn-act-top" value="#e8e8e8"><input type="text" id="btn-act-top-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="btn-act-bot" value="#d8d8d8"><input type="text" id="btn-act-bot-hex" value="#d8d8d8"></div></div>
+    <div class="field"><label>Text color</label><div class="cr"><input type="color" id="btn-act-text" value="#333333"><input type="text" id="btn-act-text-hex" value="#333333"></div></div>
+  </div>
+  <div class="sec"><h3>Post New Links</h3>
+    <div class="field"><label>Text color</label><div class="cr"><input type="color" id="new-color" value="#d64545"><input type="text" id="new-color-hex" value="#d64545"></div></div>
+    <div class="field"><label>Underline color</label><div class="cr"><input type="color" id="new-underline" value="#ff6b6b"><input type="text" id="new-underline-hex" value="#ff6b6b"></div></div>
+    <div class="field"><label>Hover color</label><div class="cr"><input type="color" id="new-hover" value="#ff0000"><input type="text" id="new-hover-hex" value="#ff0000"></div></div>
+  </div>
+</div>
+
+<!-- COMMENTS -->
+<div class="panel" id="panel-comments">
+  <div class="sec"><h3>Comment Backgrounds</h3>
+    <div class="field"><label>Odd top</label><div class="cr"><input type="color" id="com-odd-top" value="#ffffff"><input type="text" id="com-odd-top-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Odd bottom</label><div class="cr"><input type="color" id="com-odd-bot" value="#f8f8f8"><input type="text" id="com-odd-bot-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Even top</label><div class="cr"><input type="color" id="com-even-top" value="#f8f8f8"><input type="text" id="com-even-top-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Even bottom</label><div class="cr"><input type="color" id="com-even-bot" value="#f0f0f0"><input type="text" id="com-even-bot-hex" value="#f0f0f0"></div></div>
+    <div class="field"><label>Border color</label><div class="cr"><input type="color" id="com-border" value="#e8e8e8"><input type="text" id="com-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Border radius (px)</label><input type="number" id="com-radius" value="15" min="0" max="30"></div>
+  </div>
+  <div class="sec"><h3>Author and Date</h3>
+    <div class="field"><label>Author name color</label><div class="cr"><input type="color" id="com-author" value="#1e3a5f"><input type="text" id="com-author-hex" value="#1e3a5f"></div></div>
+    <div class="field"><label>Date color</label><div class="cr"><input type="color" id="com-date" value="#6b4f9c"><input type="text" id="com-date-hex" value="#6b4f9c"></div></div>
+  </div>
+  <div class="sec"><h3>Actions Bar</h3>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="com-act-top" value="#f8f8f8"><input type="text" id="com-act-top-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="com-act-bot" value="#f0f0f0"><input type="text" id="com-act-bot-hex" value="#f0f0f0"></div></div>
+    <div class="field"><label>Border</label><div class="cr"><input type="color" id="com-act-border" value="#e8e8e8"><input type="text" id="com-act-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Link color</label><div class="cr"><input type="color" id="com-act-text" value="#1e3a5f"><input type="text" id="com-act-text-hex" value="#1e3a5f"></div></div>
+  </div>
+</div>
+
+<!-- WORK CONTENT -->
+<div class="panel" id="panel-work">
+  <div class="sec"><h3>Text Container</h3>
+    <div class="field"><label>Background color</label><div class="cr"><input type="color" id="work-bg" value="#ffffff"><input type="text" id="work-bg-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Max width (px)</label><input type="number" id="work-maxw" value="800" min="400" max="1200"></div>
+    <div class="field"><label>Border radius (px)</label><input type="number" id="work-radius" value="15" min="0" max="30"></div>
+  </div>
+  <div class="sec"><h3>Drop Cap</h3>
+    <div class="chk"><input type="checkbox" id="dropcap-enabled" checked><label>Enable drop cap</label></div>
+    <div class="field" style="margin-top:8px"><label>Color</label><div class="cr"><input type="color" id="dropcap-color" value="#1e3a5f"><input type="text" id="dropcap-color-hex" value="#1e3a5f"></div></div>
+    <div class="field"><label>Size (em)</label><input type="number" id="dropcap-size" value="1.5" min="1" max="3" step="0.1"></div>
+  </div>
+  <div class="sec"><h3>Blockquote</h3>
+    <div class="field"><label>Decoration character</label><input type="text" id="bq-emoji" value="❝"></div>
+    <div class="field"><label>Left border color</label><div class="cr"><input type="color" id="bq-border" value="#e8e8e8"><input type="text" id="bq-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Background color</label><div class="cr"><input type="color" id="bq-bg" value="#f8f8f8"><input type="text" id="bq-bg-hex" value="#f8f8f8"></div></div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="panel" id="panel-stats">
+  <div class="sec"><h3>Stats Container</h3>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="st-top" value="#ffffff"><input type="text" id="st-top-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="st-bot" value="#f8f8f8"><input type="text" id="st-bot-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Border color</label><div class="cr"><input type="color" id="st-border" value="#e8e8e8"><input type="text" id="st-border-hex" value="#e8e8e8"></div></div>
+  </div>
+  <div class="sec"><h3>Stat Icons</h3>
+    <div class="field"><label>Language</label><input type="text" id="si-lang" value="🌐"></div>
+    <div class="field"><label>Words</label><input type="text" id="si-words" value="📝"></div>
+    <div class="field"><label>Chapters</label><input type="text" id="si-chap" value="📖"></div>
+    <div class="field"><label>Comments</label><input type="text" id="si-comments" value="💬"></div>
+    <div class="field"><label>Kudos</label><input type="text" id="si-kudos" value="⭐"></div>
+    <div class="field"><label>Bookmarks</label><input type="text" id="si-bookmarks" value="🔖"></div>
+    <div class="field"><label>Hits</label><input type="text" id="si-hits" value="👁️"></div>
+    <div class="field"><label>Works</label><input type="text" id="si-works" value="📄"></div>
+    <div class="field"><label>Published date</label><input type="text" id="si-published" value="📅"></div>
+    <div class="field"><label>Updated status</label><input type="text" id="si-updated" value="🔄"></div>
+    <div class="field"><label>Collections</label><input type="text" id="si-collections" value="📂"></div>
+    <div class="field"><label>Fandoms</label><input type="text" id="si-fandoms" value="🎬"></div>
+    <div class="field"><label>Subscriptions</label><input type="text" id="si-subs" value="🔔"></div>
+    <div class="field"><label>Requests/Prompts</label><input type="text" id="si-requests" value="💌"></div>
+  </div>
+  <div class="sec"><h3>Chart Appearance</h3>
+    <div class="field"><label>Bar color</label><div class="cr"><input type="color" id="chart-bar" value="#990000"><input type="text" id="chart-bar-hex" value="#990000"></div></div>
+    <div class="field"><label>Hue rotation (deg)</label><input type="number" id="chart-hue" value="0" min="0" max="360"></div>
+    <div class="field"><label>Brightness (%)</label><input type="number" id="chart-bright" value="110" min="50" max="200"></div>
+    <div class="field"><label>Sepia (%)</label><input type="number" id="chart-sepia" value="10" min="0" max="100"></div>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="panel" id="panel-filters">
+  <div class="sec"><h3>Filter Expanders</h3>
+    <div class="field"><label>Arrow color</label><div class="cr"><input type="color" id="exp-color" value="#1e3a5f"><input type="text" id="exp-color-hex" value="#1e3a5f"></div></div>
+    <div class="field"><label>Collapsed arrow</label><input type="text" id="exp-closed" value="▼"></div>
+    <div class="field"><label>Expanded arrow</label><input type="text" id="exp-open" value="▲"></div>
+  </div>
+  <div class="sec"><h3>Checkboxes</h3>
+    <div class="field"><label>Unchecked background</label><div class="cr"><input type="color" id="chk-bg" value="#ffffff"><input type="text" id="chk-bg-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Unchecked border</label><div class="cr"><input type="color" id="chk-border" value="#e8e8e8"><input type="text" id="chk-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Checked background</label><div class="cr"><input type="color" id="chk-checked-bg" value="#d8d8d8"><input type="text" id="chk-checked-bg-hex" value="#d8d8d8"></div></div>
+    <div class="field"><label>Checked border</label><div class="cr"><input type="color" id="chk-checked-border" value="#c8c8c8"><input type="text" id="chk-checked-border-hex" value="#c8c8c8"></div></div>
+  </div>
+  <div class="sec"><h3>Dashboard / Sidebar</h3>
+    <div class="field"><label>Background top</label><div class="cr"><input type="color" id="dash-top" value="#ffffff"><input type="text" id="dash-top-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Background bottom</label><div class="cr"><input type="color" id="dash-bot" value="#f8f8f8"><input type="text" id="dash-bot-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Border color</label><div class="cr"><input type="color" id="dash-border" value="#e8e8e8"><input type="text" id="dash-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Current item background</label><div class="cr"><input type="color" id="dash-cur-bg" value="#e8e8e8"><input type="text" id="dash-cur-bg-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Current item text</label><div class="cr"><input type="color" id="dash-cur-text" value="#333333"><input type="text" id="dash-cur-text-hex" value="#333333"></div></div>
+  </div>
+</div>
+
+<!-- FOOTER & UI -->
+<div class="panel" id="panel-footer">
+  <div class="sec"><h3>Footer</h3>
+    <div class="field"><label>Background</label><div class="cr"><input type="color" id="foot-bg" value="#f8f8f8"><input type="text" id="foot-bg-hex" value="#f8f8f8"></div></div>
+    <div class="field"><label>Top border</label><div class="cr"><input type="color" id="foot-border" value="#e8e8e8"><input type="text" id="foot-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Text color</label><div class="cr"><input type="color" id="foot-text" value="#333333"><input type="text" id="foot-text-hex" value="#333333"></div></div>
+    <div class="field"><label>Link color</label><div class="cr"><input type="color" id="foot-link" value="#1e3a5f"><input type="text" id="foot-link-hex" value="#1e3a5f"></div></div>
+  </div>
+  <div class="sec"><h3>Scrollbar</h3>
+    <div class="field"><label>Track color</label><div class="cr"><input type="color" id="scroll-track" value="#f0f0f0"><input type="text" id="scroll-track-hex" value="#f0f0f0"></div></div>
+    <div class="field"><label>Thumb top</label><div class="cr"><input type="color" id="scroll-top" value="#e8e8e8"><input type="text" id="scroll-top-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Thumb bottom</label><div class="cr"><input type="color" id="scroll-bot" value="#d8d8d8"><input type="text" id="scroll-bot-hex" value="#d8d8d8"></div></div>
+    <div class="field"><label>Thumb border</label><div class="cr"><input type="color" id="scroll-border" value="#f0f0f0"><input type="text" id="scroll-border-hex" value="#f0f0f0"></div></div>
+  </div>
+  <div class="sec"><h3>Modals</h3>
+    <div class="field"><label>Background</label><div class="cr"><input type="color" id="modal-bg" value="#ffffff"><input type="text" id="modal-bg-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Border</label><div class="cr"><input type="color" id="modal-border" value="#e8e8e8"><input type="text" id="modal-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Border radius (px)</label><input type="number" id="modal-radius" value="20" min="0" max="40"></div>
+  </div>
+  <div class="sec"><h3>Dropdowns / Autocomplete</h3>
+    <div class="field"><label>Background</label><div class="cr"><input type="color" id="drop-bg" value="#ffffff"><input type="text" id="drop-bg-hex" value="#ffffff"></div></div>
+    <div class="field"><label>Border</label><div class="cr"><input type="color" id="drop-border" value="#e8e8e8"><input type="text" id="drop-border-hex" value="#e8e8e8"></div></div>
+    <div class="field"><label>Hover background</label><div class="cr"><input type="color" id="drop-hover" value="#f0f0f0"><input type="text" id="drop-hover-hex" value="#f0f0f0"></div></div>
+  </div>
+</div>
+
+</div><!-- /controls -->
+
+<!-- PREVIEW -->
+<div class="preview-area">
+  <div class="prev-tabs">
+    <button class="prev-tab active" data-pv="works">Works Listing</button>
+    <button class="prev-tab" data-pv="other">Other Elements</button>
+  </div>
+  <div class="preview">
+    <div class="pview active" id="pv-works"><div id="pvw"></div></div>
+    <div class="pview" id="pv-other"><div id="pvo"></div></div>
+  </div>
+</div>
+</div><!-- /main -->
+
+<!-- OUTPUT -->
+<div class="output">
+  <div class="out-hdr">
+    <span>generated css</span>
+    <div class="out-acts">
+      <button class="olink" id="gen-btn" style="border:1px solid #9c7e6c;padding:3px 10px;font-weight:bold;color:#2c2c2a;text-decoration:none;">generate css</button>
+      <button class="olink" id="copy-btn">copy</button>
+      <button class="olink" id="dl-btn">download .css</button>
+    </div>
+  </div>
+  <textarea id="css-output" placeholder="Click generate css to build your stylesheet..."></textarea>
+  <div class="note">questions? dm on <a href="https://x.com/vinsodas" target="_blank" style="color:#9c7e6c">twitter/x</a></div>
+</div>
+
+</div><!-- /app -->
+<script>
+function g(id){const e=document.getElementById(id);return e?e.value:'';}
+
+// ── WORKS LISTING PREVIEW ──────────────────────────────────────────────────
+function renderWorks(){
+  const bgTop=g('bg-top'),bgMid=g('bg-mid'),bgBot=g('bg-bot');
+  const tMain=g('text-main'),tLink=g('text-link'),tVis=g('text-visited'),tHead=g('text-heading');
+  const logoTop=g('logo-top'),logoBot=g('logo-bot'),logoBdr=g('logo-border');
+  const hdrTop=g('hdr-top'),hdrBot=g('hdr-bot'),hdrBdr=g('hdr-border');
+  const navF=g('nav-fandoms'),navB=g('nav-browse'),navS=g('nav-search'),navFaq=g('nav-faq');
+  const uCol=g('user-color'),uIcBdr=g('user-icon-border');
+  const cardTop=g('card-top'),cardBot=g('card-bot'),cardBdr=g('card-border'),cardR=g('card-radius');
+  const a1=g('author-c1'),a2=g('author-c2'),blurbIcon=g('blurb-icon');
+  const stTop=g('st-top'),stBot=g('st-bot'),stBdr=g('st-border');
+  const siW=g('si-words'),siC=g('si-chap'),siK=g('si-kudos'),siCom=g('si-comments'),siB=g('si-bookmarks'),siH=g('si-hits');
+  const tagR=g('tag-radius');
+  const charE=g('char-emoji'),charTp=g('char-top'),charBt=g('char-bot'),charBr=g('char-border'),charTx=g('char-text');
+  const romE=g('rom-emoji'),romTp=g('rom-top'),romBt=g('rom-bot'),romBr=g('rom-border'),romTx=g('rom-text');
+  const platE=g('plat-emoji'),platTp=g('plat-top'),platBt=g('plat-bot'),platBr=g('plat-border'),platTx=g('plat-text');
+  const freeE=g('free-emoji'),freeTp=g('free-top'),freeBt=g('free-bot'),freeBr=g('free-border'),freeTx=g('free-text');
+  const defTp=g('def-top'),defBt=g('def-bot'),defBr=g('def-border'),defTx=g('def-text');
+  const rtGen=g('rt-general'),rtTeen=g('rt-teen'),rtWarnNo=g('rt-warn-no'),rtWarnCntw=g('rt-warn-cntw'),rtComp=g('rt-complete'),rtWip=g('rt-wip');
+  const rtHet=g('rt-het'),rtSlash=g('rt-slash');
+  const notBg=g('notice-bg'),notBdr=g('notice-border');
+  const btnTop=g('btn-top'),btnBot=g('btn-bot'),btnTx=g('btn-text'),btnBdr=g('btn-border'),btnR=g('btn-radius');
+  const dashTop=g('dash-top'),dashBot=g('dash-bot'),dashBdr=g('dash-border'),dashCurBg=g('dash-cur-bg'),dashCurTx=g('dash-cur-text');
+  const expCol=g('exp-color'),expCls=g('exp-closed');
+
+  function tag(emoji,top,bot,border,text,label){
+    return `<span style="display:inline-block;padding:3px 9px;border-radius:${tagR}px;border:2px solid ${border};background:linear-gradient(135deg,${top},${bot});color:${text};font-size:11px;">${emoji} ${label}</span>`;
+  }
+  function statbar(items){
+    return `<div style="display:flex;flex-wrap:wrap;gap:12px;font-size:11px;background:linear-gradient(135deg,${stTop},${stBot});border:1px solid ${stBdr};border-radius:8px;padding:7px 10px;margin-bottom:8px;">${items}</div>`;
+  }
+  function blurb(title,author,reqtags,fandom,tags,stats,summary){
+    return `<div style="background:linear-gradient(135deg,${cardTop},${cardBot});border:3px solid ${cardBdr};border-radius:${cardR}px;padding:14px;margin-bottom:12px;position:relative;">
+      <span style="position:absolute;top:10px;right:12px;font-size:16px;">${blurbIcon}</span>
+      <div style="font-size:15px;font-weight:bold;color:${tLink};margin-bottom:2px;">${title}</div>
+      <div style="font-size:12px;font-style:italic;background:linear-gradient(135deg,${a1},${a2});-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:7px;">by ${author}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;font-size:11px;">${reqtags}</div>
+      <div style="font-size:12px;color:#777;margin-bottom:7px;">${fandom}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${tags}</div>
+      ${statbar(stats)}
+      <div style="font-size:13px;font-style:italic;color:${tMain};">${summary}</div>
+    </div>`;
+  }
+  function rtag(label){
+    return `<span style="padding:2px 7px;border:1px solid ${cardBdr};border-radius:10px;background:${stTop};font-size:11px;">${label}</span>`;
+  }
+
+  document.getElementById('pvw').innerHTML=`
+<div style="background:linear-gradient(180deg,${bgTop} 0%,${bgMid} 50%,${bgBot} 100%);color:${tMain};font-size:13px;">
+
+  <!-- Logo bar -->
+  <div style="background:linear-gradient(135deg,${logoTop},${logoBot});border-bottom:2px solid ${logoBdr};display:flex;align-items:center;flex-wrap:wrap;">
+    <div style="padding:10px 16px;display:flex;align-items:baseline;gap:4px;">
+      <img src="https://archiveofourown.org/images/ao3_logos/logo_42.png" style="height:28px;width:auto;" onerror="this.style.display='none'">
+      <span style="font-size:16px;font-weight:bold;color:#990000;">Archive of Our Own</span>
+      <sup style="font-style:italic;font-size:10px;color:#900;margin-left:2px;">omega</sup>
+    </div>
+    <div style="margin-left:auto;padding:10px 16px;font-size:12px;display:flex;gap:10px;align-items:center;">
+      <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#ccc;border:2px solid ${uIcBdr};"></span>
+      <span style="font-weight:bold;color:${uCol};">Hi, username!</span>
+      <span style="color:${tLink};border-bottom:2px solid ${tLink};cursor:default;">Post</span>
+      <span style="color:${tMain};cursor:default;">Log Out</span>
+    </div>
+  </div>
+
+  <!-- Nav bar -->
+  <div style="background:linear-gradient(135deg,${hdrTop},${hdrBot});border-bottom:3px solid ${hdrBdr};display:flex;align-items:center;">
+    <div style="display:flex;flex:1;">
+      <span style="padding:10px 14px;font-size:13px;cursor:default;">${navF} Fandoms</span>
+      <span style="padding:10px 14px;font-size:13px;cursor:default;">${navB} Browse</span>
+      <span style="padding:10px 14px;font-size:13px;cursor:default;">${navS} Search</span>
+      <span style="padding:10px 14px;font-size:13px;cursor:default;">${navFaq} About</span>
+    </div>
+    <div style="padding:8px 16px;">
+      <input type="text" placeholder="Search..." style="padding:4px 8px;border:1px solid ${hdrBdr};font-size:12px;border-radius:4px;background:${logoTop};color:${tMain};" readonly>
+    </div>
+  </div>
+
+  <!-- Notice -->
+  <div style="margin:10px 16px 0;padding:7px 12px;background:${notBg};border:1px solid ${notBdr};border-radius:10px;font-size:12px;color:${tMain};">
+    You have muted some users on the Archive. Some items may not be shown. <span style="color:${tLink};text-decoration:underline;cursor:default;">your Muted Users page</span>.
+  </div>
+
+  <div style="display:flex;gap:0;padding:12px 16px;">
+    <div style="flex:1;padding-right:14px;">
+      <h2 style="font-size:19px;color:${tHead};margin-bottom:10px;">1 - 20 of 150 Works in <span style="border:2px solid ${cardBdr};border-radius:10px;padding:2px 10px;font-size:17px;background:${cardTop};">Fandom Name</span></h2>
+      <div style="display:flex;gap:5px;align-items:center;margin-bottom:10px;font-size:13px;">
+        <span style="color:${tLink};cursor:default;">&larr; Previous</span>
+        ${[1,2,3,4,5].map((n,i)=>`<span style="padding:3px 8px;border:2px solid ${cardBdr};border-radius:7px;background:${i===0?g('btn-act-top'):cardTop};font-weight:${i===0?'bold':'normal'};color:${i===0?g('btn-act-text'):tLink};cursor:default;">${n}</span>`).join('')}
+        <span style="color:${tLink};cursor:default;">Next &rarr;</span>
+      </div>
+      ${blurb(
+        'A Work Title','author_name',
+        rtag(rtGen+' General')+' '+rtag(rtWarnNo+' No Warnings')+' '+rtag(rtHet+' F/M')+' '+rtag(rtComp+' Complete'),
+        'Fandom A | Fandom B',
+        tag(romE,romTp,romBt,romBr,romTx,'Character A/Character B')+' '+
+        tag(charE,charTp,charBt,charBr,charTx,'Character A')+' '+
+        tag(charE,charTp,charBt,charBr,charTx,'Character B')+' '+
+        tag(platE,platTp,platBt,platBr,platTx,'Character A &amp; Character C')+' '+
+        tag(freeE,freeTp,freeBt,freeBr,freeTx,'Slow Burn')+' '+
+        tag(freeE,freeTp,freeBt,freeBr,freeTx,'Hurt/Comfort')+' '+
+        tag('',defTp,defBt,defBr,defTx,'Canon Compliant'),
+        `<span>${siW} 950</span><span>${siC} 1/1</span><span style="color:${tLink};">${siK} 68</span><span>${siCom} 2</span><span>${siH} 701</span>`,
+        'When Character A faces an impossible choice, Character B shows up in unexpected ways.'
+      )}
+      ${blurb(
+        'Another Work Title','second_author',
+        rtag(rtTeen+' Teen')+' '+rtag(rtWarnCntw+' CNTW')+' '+rtag(rtSlash+' M/M')+' '+rtag(rtWip+' WIP'),
+        'Fandom A',
+        tag(romE,romTp,romBt,romBr,romTx,'Character B/Character C')+' '+
+        tag(charE,charTp,charBt,charBr,charTx,'Character B')+' '+
+        tag(charE,charTp,charBt,charBr,charTx,'Character C')+' '+
+        tag(freeE,freeTp,freeBt,freeBr,freeTx,'Pining')+' '+
+        tag('',defTp,defBt,defBr,defTx,'Post-Canon'),
+        `<span>${siW} 9,140</span><span>${siC} 6/?</span><span style="color:${tLink};">${siK} 1,847</span><span style="color:${tVis};">${siB} 412</span><span>${siH} 22,109</span>`,
+        'Five times Character B said nothing, and one time they said everything.'
+      )}
+    </div>
+    <!-- Filter sidebar -->
+    <div style="width:200px;flex-shrink:0;">
+      <div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;">
+        <span style="padding:4px 10px;border:2px solid ${btnBdr};border-radius:${btnR}px;background:linear-gradient(135deg,${g('btn-act-top')},${g('btn-act-bot')});color:${g('btn-act-text')};font-size:12px;cursor:default;font-weight:bold;">Works</span>
+        <span style="padding:4px 10px;border:2px solid ${btnBdr};border-radius:${btnR}px;background:linear-gradient(135deg,${btnTop},${btnBot});color:${btnTx};font-size:12px;cursor:default;">Bookmarks</span>
+        <span style="padding:4px 10px;border:2px solid ${btnBdr};border-radius:${btnR}px;background:linear-gradient(135deg,${btnTop},${btnBot});color:${btnTx};font-size:12px;cursor:default;">Unfavorite Tag</span>
+      </div>
+      <div style="background:linear-gradient(135deg,${dashTop},${dashBot});border:2px solid ${dashBdr};border-radius:10px;padding:12px;font-size:12px;">
+        <div style="font-weight:bold;font-size:13px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid ${dashBdr};">Sort and Filter</div>
+        <div style="margin-bottom:5px;font-size:11px;font-weight:bold;color:${tMain};">Sort by</div>
+        <div style="margin-bottom:10px;padding:3px 6px;border:1px solid ${dashBdr};background:${logoTop};font-size:11px;border-radius:4px;">Date Updated</div>
+        <div style="font-weight:bold;margin-bottom:4px;font-size:11px;color:${tMain};">Include</div>
+        ${['Ratings','Warnings','Categories','Fandoms','Characters','Relationships','Additional Tags'].map(f=>`<div style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.06);font-size:11px;"><span style="color:${expCol};cursor:default;">&#9660;</span> <span style="color:${tLink};cursor:default;">${f}</span></div>`).join('')}
+        <div style="margin-top:8px;font-weight:bold;margin-bottom:4px;font-size:11px;color:${tMain};">Exclude</div>
+        ${['Ratings','Warnings'].map(f=>`<div style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.06);font-size:11px;"><span style="color:${expCol};cursor:default;">&#9660;</span> <span style="color:${tLink};cursor:default;">${f}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+// ── OTHER ELEMENTS PREVIEW ────────────────────────────────────────────────
+function renderOther(){
+  const bgTop=g('bg-top'),bgMid=g('bg-mid'),bgBot=g('bg-bot');
+  const tMain=g('text-main'),tLink=g('text-link'),tVis=g('text-visited'),tHead=g('text-heading');
+  const cardTop=g('card-top'),cardBot=g('card-bot'),cardBdr=g('card-border'),cardR=g('card-radius');
+  const btnTop=g('btn-top'),btnBot=g('btn-bot'),btnTx=g('btn-text'),btnBdr=g('btn-border'),btnR=g('btn-radius');
+  const btnHovTop=g('btn-hov-top'),btnHovBot=g('btn-hov-bot'),btnHovTx=g('btn-hov-text');
+  const btnActTop=g('btn-act-top'),btnActBot=g('btn-act-bot'),btnActTx=g('btn-act-text');
+  const newCol=g('new-color'),newUnd=g('new-underline');
+  const inputBg=g('input-bg'),inputTx=g('input-text'),inputBdr=g('input-border'),inputR=g('input-radius');
+  const focusCol=g('focus-color'),focusStyle=g('focus-style');
+  const reqCol=g('req-color'),errCol=g('err-color'),invBdr=g('invalid-border');
+  const notBg=g('notice-bg'),notBdr=g('notice-border');
+  const comOddTop=g('com-odd-top'),comOddBot=g('com-odd-bot');
+  const comEvenTop=g('com-even-top'),comEvenBot=g('com-even-bot');
+  const comBdr=g('com-border'),comR=g('com-radius');
+  const comAuthor=g('com-author'),comDate=g('com-date');
+  const comActTop=g('com-act-top'),comActBot=g('com-act-bot'),comActBdr=g('com-act-border'),comActTx=g('com-act-text');
+  const workBg=g('work-bg'),workMaxW=g('work-maxw'),workR=g('work-radius');
+  const dcEnabled=document.getElementById('dropcap-enabled').checked;
+  const dcColor=g('dropcap-color'),dcSize=g('dropcap-size');
+  const bqEmoji=g('bq-emoji'),bqBdr=g('bq-border'),bqBg=g('bq-bg');
+  const stTop=g('st-top'),stBot=g('st-bot'),stBdr=g('st-border');
+  const siW=g('si-words'),siC=g('si-chap'),siK=g('si-kudos'),siCom=g('si-comments'),siB=g('si-bookmarks'),siH=g('si-hits'),siPub=g('si-published'),siSubs=g('si-subs');
+  const chartBar=g('chart-bar'),chartHue=g('chart-hue'),chartBright=g('chart-bright'),chartSepia=g('chart-sepia');
+  const chkBg=g('chk-bg'),chkBdr=g('chk-border'),chkChBg=g('chk-checked-bg'),chkChBdr=g('chk-checked-border');
+  const dashTop=g('dash-top'),dashBot=g('dash-bot'),dashBdr=g('dash-border'),dashCurBg=g('dash-cur-bg'),dashCurTx=g('dash-cur-text');
+  const footBg=g('foot-bg'),footBdr=g('foot-border'),footTx=g('foot-text'),footLink=g('foot-link');
+  const dropBg=g('drop-bg'),dropBdr=g('drop-border'),dropHov=g('drop-hover');
+  const modalBg=g('modal-bg'),modalBdr=g('modal-border'),modalR=g('modal-radius');
+  const a1=g('author-c1'),a2=g('author-c2');
+  const expCol=g('exp-color'),expCls=g('exp-closed'),expOpn=g('exp-open');
+
+  const dcStyle=dcEnabled?`font-size:${dcSize}em;font-weight:700;color:${dcColor};float:left;line-height:0.85;margin-right:1px;`:'';
+
+  const sec=(label,html)=>`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#9c7e6c;padding:10px 16px 4px;border-top:1px solid #d6ccc2;background:#f5ede4;">${label}</div><div style="padding:14px 16px;background:linear-gradient(180deg,${bgTop},${bgBot});">${html}</div>`;
+
+  document.getElementById('pvo').innerHTML=`<div style="color:${tMain};font-size:13px;">
+
+${sec('Visited Links',`
+  <p style="font-size:13px;">Regular link: <a href="#" style="color:${tLink};text-decoration:none;">this is an unvisited link</a></p>
+  <p style="font-size:13px;margin-top:6px;">Visited link: <a href="#" style="color:${tVis};text-decoration:none;">this link has been visited</a></p>
+  <p style="font-size:13px;margin-top:6px;">In a blurb: <a href="#" style="color:${tLink};">Work Title</a> by <span style="font-style:italic;background:linear-gradient(135deg,${a1},${a2});-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">author_name</span> &mdash; kudos by <a href="#" style="color:${tVis};">returning_reader</a></p>
+`)}
+
+${sec('Form Elements',`
+  <div style="background:linear-gradient(135deg,${cardTop},${cardBot});border:2px solid ${cardBdr};border-radius:${cardR}px;padding:14px;max-width:420px;">
+    <div style="margin-bottom:10px;">
+      <label style="display:block;font-size:12px;font-weight:bold;color:${tMain};margin-bottom:3px;">Work Title <span style="color:${reqCol};">*</span></label>
+      <input type="text" value="My Work Title" readonly style="width:100%;padding:5px 8px;border:2px solid ${inputBdr};border-radius:${inputR}px;background:${inputBg};color:${inputTx};font-size:13px;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="display:block;font-size:12px;font-weight:bold;color:${tMain};margin-bottom:3px;">Summary</label>
+      <textarea readonly style="width:100%;height:60px;padding:5px 8px;border:2px solid ${inputBdr};border-radius:${inputR}px;background:${inputBg};color:${inputTx};font-size:12px;">A short summary of the work...</textarea>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="display:block;font-size:12px;font-weight:bold;color:${tMain};margin-bottom:3px;">Rating</label>
+      <select style="padding:5px 8px;border:2px solid ${inputBdr};border-radius:${inputR}px;background:${inputBg};color:${inputTx};font-size:13px;">
+        <option>General Audiences</option>
+      </select>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:bold;color:${tMain};margin-bottom:3px;display:block;">Focused input (outline: ${focusStyle})</label>
+      <input type="text" value="Currently focused..." readonly style="width:100%;padding:5px 8px;border:2px solid ${inputBdr};border-radius:${inputR}px;background:${inputBg};color:${inputTx};font-size:13px;outline:2px ${focusStyle} ${focusCol};">
+    </div>
+    <button style="padding:6px 16px;border:2px solid ${btnBdr};border-radius:${btnR}px;background:linear-gradient(135deg,${btnTop},${btnBot});color:${btnTx};font-size:13px;cursor:default;">Post Work</button>
+  </div>
+`)}
+
+${sec('Errors and Required',`
+  <div style="max-width:420px;">
+    <div style="background:${notBg};border:2px solid ${notBdr};border-radius:10px;padding:10px 12px;font-size:12px;color:${tMain};margin-bottom:10px;">
+      This is a notice/alert message. <a href="#" style="color:${tLink};">Learn more</a>
+    </div>
+    <div style="margin-bottom:8px;">
+      <label style="font-size:12px;font-weight:bold;display:block;margin-bottom:3px;">Required field <span style="color:${reqCol};">* Required</span></label>
+      <input type="text" placeholder="This field is required" readonly style="width:100%;padding:5px 8px;border:2px dashed ${invBdr};border-radius:${inputR}px;background:${inputBg};color:${inputTx};font-size:13px;">
+      <span style="font-size:11px;color:${errCol};display:block;margin-top:3px;">This field cannot be blank.</span>
+    </div>
+    <div style="background:${notBg};border:2px solid ${invBdr};border-radius:8px;padding:8px 12px;font-size:12px;color:${errCol};">
+      Error: Something went wrong. Please check the highlighted fields above.
+    </div>
+  </div>
+`)}
+
+${sec('Buttons: Default / Hover / Active / Post New',`
+  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">
+    <div style="text-align:center;">
+      <span style="display:inline-block;padding:6px 16px;border:2px solid ${btnBdr};border-radius:${btnR}px;background:linear-gradient(135deg,${btnTop},${btnBot});color:${btnTx};font-size:13px;cursor:default;">Default</span>
+      <div style="font-size:10px;color:#888;margin-top:3px;">default</div>
+    </div>
+    <div style="text-align:center;">
+      <span style="display:inline-block;padding:6px 16px;border:2px solid ${btnBdr};border-radius:${btnR}px;background:linear-gradient(135deg,${btnHovTop},${btnHovBot});color:${btnHovTx};font-size:13px;cursor:default;">Hover</span>
+      <div style="font-size:10px;color:#888;margin-top:3px;">hover</div>
+    </div>
+    <div style="text-align:center;">
+      <span style="display:inline-block;padding:6px 16px;border:2px solid ${btnBdr};border-radius:${btnR}px;background:linear-gradient(135deg,${btnActTop},${btnActBot});color:${btnActTx};font-size:13px;font-weight:bold;cursor:default;">Active</span>
+      <div style="font-size:10px;color:#888;margin-top:3px;">active/current</div>
+    </div>
+  </div>
+  <div style="font-size:13px;margin-top:6px;">
+    Post new links: 
+    <a href="#" style="color:${newCol};font-weight:700;text-decoration:none;border-bottom:2px solid ${newUnd};">Post New Work</a>
+    &nbsp;&nbsp;
+    <a href="#" style="color:${newCol};font-weight:700;text-decoration:none;border-bottom:2px solid ${newUnd};">Post New Chapter</a>
+  </div>
+`)}
+
+${sec('Comments',`
+  <div style="max-width:560px;">
+    <div style="background:linear-gradient(135deg,${comOddTop},${comOddBot});border:2px solid ${comBdr};border-radius:${comR}px;padding:13px;margin-bottom:8px;">
+      <span style="font-weight:bold;color:${comAuthor};cursor:default;">reader_one</span>
+      <span style="font-size:11px;color:${comDate};margin-left:8px;">2026-04-01</span>
+      <p style="margin-top:7px;font-size:13px;line-height:1.6;color:${tMain};">This is an odd-numbered comment. I love the way you've written these characters together.</p>
+      <div style="margin-top:9px;padding-top:7px;border-top:1px dashed ${comBdr};display:flex;gap:10px;">
+        <span style="font-size:11px;padding:3px 9px;background:linear-gradient(135deg,${comActTop},${comActBot});border:1px solid ${comActBdr};border-radius:7px;color:${comActTx};cursor:default;">Reply</span>
+        <span style="font-size:11px;padding:3px 9px;background:linear-gradient(135deg,${comActTop},${comActBot});border:1px solid ${comActBdr};border-radius:7px;color:${comActTx};cursor:default;">Delete</span>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,${comEvenTop},${comEvenBot});border:2px solid ${comBdr};border-radius:${comR}px;padding:13px;margin-bottom:8px;">
+      <span style="font-weight:bold;color:${comAuthor};cursor:default;">reader_two</span>
+      <span style="font-size:11px;color:${comDate};margin-left:8px;">2026-04-01</span>
+      <p style="margin-top:7px;font-size:13px;line-height:1.6;color:${tMain};">This is an even-numbered comment. Can't wait to see what happens next chapter.</p>
+      <div style="margin-top:9px;padding-top:7px;border-top:1px dashed ${comBdr};display:flex;gap:10px;">
+        <span style="font-size:11px;padding:3px 9px;background:linear-gradient(135deg,${comActTop},${comActBot});border:1px solid ${comActBdr};border-radius:7px;color:${comActTx};cursor:default;">Reply</span>
+      </div>
+    </div>
+  </div>
+`)}
+
+${sec('Work Content Area',`
+  <div style="max-width:${workMaxW}px;">
+    <div style="background:${workBg};padding:18px;border-radius:${workR}px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+      <h3 style="color:${tHead};border-bottom:2px solid ${cardBdr};padding-bottom:6px;margin-bottom:10px;font-size:14px;">Summary:</h3>
+      <p style="font-size:13px;line-height:1.7;font-style:italic;color:${tMain};margin-bottom:12px;">${dcEnabled?`<span style="${dcStyle}">W</span>`:'W'}hen Character A can't do something, Character B steps up in ways neither of them expected.</p>
+      <p style="font-size:13px;line-height:1.7;color:${tMain};margin-bottom:10px;">${dcEnabled?`<span style="${dcStyle}">C</span>`:'C'}haracter A looked out the window at the city below. Sleep had been elusive lately.</p>
+      <p style="font-size:13px;line-height:1.7;color:${tMain};margin-bottom:10px;">"You're up early," said Character B. Their voice was soft in the way it always was in mornings. "Couldn't sleep?"</p>
+      <div style="background:${bqBg};border-left:4px solid ${bqBdr};border-radius:0 10px 10px 0;padding:10px 14px;margin:10px 0;font-style:italic;position:relative;color:${tMain};font-size:13px;">
+        <span style="position:absolute;top:6px;right:10px;font-size:13px;">${bqEmoji}</span>
+        "Some distances," Character A said quietly, "can only be crossed from both ends at once."
+      </div>
+      <p style="font-size:13px;line-height:1.7;color:${tMain};">Character B crossed the room and sat beside them. Neither spoke for a long time.</p>
+    </div>
+  </div>
+`)}
+
+${sec('Statistics',`
+  <div style="max-width:600px;">
+    <div style="background:linear-gradient(135deg,${stTop},${stBot});border:2px solid ${stBdr};border-radius:${cardR}px;padding:12px;margin-bottom:12px;font-size:12px;display:flex;flex-wrap:wrap;gap:14px;">
+      <span>${siPub} 2026-04-01</span>
+      <span>${siW} 42,810</span>
+      <span>${siC} 12/12</span>
+      <span style="color:${tLink};">${siK} 3,204</span>
+      <span>${siCom} 892</span>
+      <span style="color:${tVis};">${siB} 456</span>
+      <span>${siH} 58,302</span>
+      <span>${siSubs} 279</span>
+    </div>
+    <div style="background:linear-gradient(135deg,${stTop},${stBot});border:2px solid ${stBdr};border-radius:${cardR}px;padding:12px;filter:hue-rotate(${chartHue}deg) brightness(${chartBright}%) sepia(${chartSepia}%);">
+      <div style="font-size:12px;font-weight:bold;margin-bottom:8px;color:${tMain};">Top Five By Hits</div>
+      <div style="display:flex;gap:6px;align-items:flex-end;height:70px;margin-bottom:6px;">
+        ${[72,80,48,44,40].map((h,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end;"><div style="width:100%;background:${chartBar};border-radius:2px 2px 0 0;height:${h}%;"></div><div style="font-size:8px;text-align:center;color:${tMain};line-height:1.2;">Work ${String.fromCharCode(65+i)}</div></div>`).join('')}
+      </div>
+    </div>
+  </div>
+`)}
+
+${sec('Checkboxes',`
+  <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:${tMain};">
+    <label style="display:flex;align-items:center;gap:8px;cursor:default;">
+      <span style="display:inline-block;width:16px;height:16px;border:2px solid ${chkBdr};border-radius:4px;background:${chkBg};"></span>
+      Unchecked
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:default;">
+      <span style="display:inline-block;width:16px;height:16px;border:2px solid ${chkChBdr};border-radius:4px;background:${chkChBg};text-align:center;line-height:14px;font-size:11px;color:${tMain};">&#10003;</span>
+      Checked
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:default;color:#aaa;">
+      <span style="display:inline-block;width:16px;height:16px;border:2px solid ${chkBdr};border-radius:4px;background:${chkBg};opacity:0.5;"></span>
+      Disabled/excluded
+    </label>
+  </div>
+`)}
+
+${sec('Sidebar and Dashboard',`
+  <div style="display:flex;gap:0;max-width:560px;border:2px solid ${dashBdr};border-radius:10px;overflow:hidden;">
+    <div style="width:160px;flex-shrink:0;background:linear-gradient(135deg,${dashTop},${dashBot});border-right:2px solid ${dashBdr};padding:10px 0;font-size:12px;">
+      <div style="padding:5px 14px;text-align:right;color:${tLink};cursor:default;">Dashboard</div>
+      <div style="padding:5px 14px;text-align:right;color:${tLink};cursor:default;">Profile</div>
+      <div style="padding:5px 14px;text-align:right;color:${tLink};cursor:default;">Preferences</div>
+      <div style="padding:5px 14px;text-align:right;color:${tLink};cursor:default;margin-top:6px;">Works (25)</div>
+      <div style="padding:5px 14px;text-align:right;color:${tLink};cursor:default;">Drafts (2)</div>
+      <div style="padding:5px 14px;text-align:right;color:${tLink};cursor:default;">Series (4)</div>
+      <div style="padding:5px 14px;text-align:right;background:${dashCurBg};color:${dashCurTx};font-weight:bold;cursor:default;margin:4px 0;">Statistics</div>
+      <div style="padding:5px 14px;text-align:right;color:${tLink};cursor:default;">Subscriptions</div>
+    </div>
+    <div style="flex:1;padding:12px;background:linear-gradient(180deg,${bgTop},${bgBot});">
+      <div style="font-size:13px;font-weight:bold;color:${tHead};margin-bottom:8px;">Dashboard</div>
+      <div style="font-size:12px;color:${tMain};line-height:1.8;">
+        <div>Hello, <span style="color:${g('user-color')};font-weight:bold;">username</span>!</div>
+        <div>You have <a href="#" style="color:${tLink};">3 unread messages</a>.</div>
+        <div style="margin-top:6px;"><a href="#" style="color:${g('new-color')};font-weight:700;text-decoration:none;border-bottom:2px solid ${g('new-underline')};">Post New Work</a></div>
+      </div>
+    </div>
+  </div>
+`)}
+
+${sec('Footer',`
+  <div style="background:${footBg};border-top:3px solid ${footBdr};padding:16px;font-size:12px;color:${footTx};">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:10px;">
+      <a href="#" style="color:${footLink};text-decoration:none;">Terms of Service</a>
+      <a href="#" style="color:${footLink};text-decoration:none;">DMCA Policy</a>
+      <a href="#" style="color:${footLink};text-decoration:none;">Privacy Policy</a>
+      <a href="#" style="color:${footLink};text-decoration:none;">Contact</a>
+      <a href="#" style="color:${footLink};text-decoration:none;">Donate</a>
+    </div>
+    <div style="color:${footTx};">Archive of Our Own, a project of the Organization for Transformative Works</div>
+  </div>
+`)}
+
+${sec('Dropdowns and Modals',`
+  <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+    <div>
+      <div style="font-size:11px;color:#888;margin-bottom:4px;">Dropdown / Autocomplete</div>
+      <div style="background:${dropBg};border:2px solid ${dropBdr};border-radius:10px;padding:4px 0;width:180px;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <div style="padding:6px 12px;color:${tMain};cursor:default;">Option One</div>
+        <div style="padding:6px 12px;background:${dropHov};color:${tMain};cursor:default;">Option Two (hover)</div>
+        <div style="padding:6px 12px;color:${tMain};cursor:default;">Option Three</div>
+        <div style="padding:6px 12px;color:${tMain};cursor:default;">Option Four</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:#888;margin-bottom:4px;">Modal / Dialog</div>
+      <div style="background:${modalBg};border:3px solid ${modalBdr};border-radius:${modalR}px;padding:16px;width:200px;box-shadow:0 6px 20px rgba(0,0,0,0.12);font-size:12px;color:${tMain};">
+        <div style="font-weight:bold;font-size:13px;margin-bottom:8px;color:${tHead};">Confirm Action</div>
+        <p style="margin-bottom:10px;line-height:1.5;">Are you sure you want to delete this work?</p>
+        <div style="display:flex;gap:8px;">
+          <span style="padding:4px 12px;border:2px solid ${btnBdr};border-radius:${btnR}px;background:linear-gradient(135deg,${btnTop},${btnBot});color:${btnTx};cursor:default;font-size:12px;">Cancel</span>
+          <span style="padding:4px 12px;border:2px solid ${invBdr};border-radius:${btnR}px;background:#fff0f0;color:${errCol};cursor:default;font-size:12px;">Delete</span>
+        </div>
+      </div>
+    </div>
+  </div>
+`)}
+
+</div>`;
+}
+
+function renderAll(){renderWorks();renderOther();}
+
+// ── CSS GENERATOR ─────────────────────────────────────────────────────────
+function generateCSS(){
+  const v=g;
+  const dd=id=>g(id);
+  const css=`/* AO3 Skin - Generated by Skin Wizard */
+
+body, #header, #outer {
+  background-color: ${v('bg-top')};
+  color: ${v('text-main')};
+}
+body {
+  font-size: 105%;
+  background: linear-gradient(180deg, ${v('bg-top')} 0%, ${v('bg-mid')} 50%, ${v('bg-bot')} 100%);
+  min-height: 100vh;
+  font-family: ${v('font-primary')};
+}
+body, blockquote, pre, input, textarea, .toggled form, .dynamic form,
+.secondary, .dropdown, .bookmark .user .meta {
+  font-family: ${v('font-primary')};
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: ${v('font-primary')} !important;
+  color: ${v('text-heading')};
+}
+a, a:link, .blurb h4 a:link {
+  color: ${v('text-link')};
+  text-decoration: none;
+  font-weight: 500;
+}
+a:visited, a:visited:hover, .bookmark .count a, .userstuff h2 {
+  color: ${v('text-visited')};
+}
+
+/* User area */
+#header .user a, #greeting .current {
+  color: ${v('user-color')} !important;
+  font-weight: 600 !important;
+}
+#header .user .icon img {
+  border: 2px solid ${v('user-icon-border')} !important;
+}
+
+/* Logo / username bar (top row) */
+#header, #small_login {
+  background: linear-gradient(135deg, ${v('logo-top')}, ${v('logo-bot')});
+  border-bottom: 2px solid ${v('logo-border')};
+}
+
+/* Navigation bar (second row) */
+#header .primary {
+  background: linear-gradient(135deg, ${v('hdr-top')}, ${v('hdr-bot')});
+  border-bottom: 3px solid ${v('hdr-border')};
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  height: fit-content;
+}
+#header ul.primary {
+  background: linear-gradient(135deg, ${v('hdr-top')}, ${v('hdr-bot')});
+  background-image: none;
+}
+
+/* Nav emojis */
+#header .primary li:nth-child(1) a::before { content: "${v('nav-fandoms')} "; }
+#header .primary li:nth-child(2) a::before { content: "${v('nav-browse')} "; }
+#header .primary li:nth-child(3) a::before { content: "${v('nav-search')} "; }
+#header .primary li:nth-child(4) a::before { content: "${v('nav-faq')} "; }
+
+/* Fandoms submenu */
+#header .dropdown:nth-child(1) .menu a[href*="/media"]::before { content: "${dd('dd-media')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="Anime"]::before { content: "${dd('dd-anime')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="Books"]::before { content: "${dd('dd-books')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="Cartoons"]::before { content: "${dd('dd-cartoons')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="Celebrities"]::before { content: "${dd('dd-celeb')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="/movies"]::before { content: "${dd('dd-movies')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="Music"]::before { content: "${dd('dd-music')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="Other"]::before { content: "${dd('dd-other')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="Theater"]::before { content: "${dd('dd-theater')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="TV"]::before { content: "${dd('dd-tv')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="Video"]::before { content: "${dd('dd-games')} "; }
+#header .dropdown:nth-child(1) .menu a[href*="Uncategorized"]::before { content: "${dd('dd-uncat')} "; }
+
+/* Browse submenu */
+#header .dropdown:nth-child(2) .menu a[href*="/works"]::before { content: "${dd('dd-works')} "; }
+#header .dropdown:nth-child(2) .menu a[href*="/bookmarks"]::before { content: "${dd('dd-bookmarks')} "; }
+#header .dropdown:nth-child(2) .menu a[href*="/tags"]::before { content: "${dd('dd-tags')} "; }
+#header .dropdown:nth-child(2) .menu a[href*="/collections"]::before { content: "${dd('dd-collections')} "; }
+#header .dropdown:nth-child(2) .menu a[href*="/people"]::before { content: "${dd('dd-people')} "; }
+
+/* Search submenu */
+#header .dropdown:nth-child(3) .menu a[href*="/works/search"]::before { content: "${dd('dd-wsearch')} "; }
+#header .dropdown:nth-child(3) .menu a[href*="/bookmarks/search"]::before { content: "${dd('dd-bsearch')} "; }
+#header .dropdown:nth-child(3) .menu a[href*="/tags/search"]::before { content: "${dd('dd-tsearch')} "; }
+#header .dropdown:nth-child(3) .menu a[href*="/people/search"]::before { content: "${dd('dd-psearch')} "; }
+
+/* About submenu */
+#header .dropdown:nth-child(4) .menu a[href*="/faq"]::before { content: "${dd('dd-faq')} "; }
+#header .dropdown:nth-child(4) .menu a[href*="/donate"]::before { content: "${dd('dd-donate')} "; }
+#header .dropdown:nth-child(4) .menu a[href*="/news"]::before { content: "${dd('dd-news')} "; }
+#header .dropdown:nth-child(4) .menu a[href*="/opendoors"]::before { content: "${dd('dd-opendoors')} "; }
+#header .dropdown:nth-child(4) .menu a[href*="/tos"]::before { content: "${dd('dd-tos')} "; }
+#header .dropdown:nth-child(4) .menu a[href*="/contact"]::before { content: "${dd('dd-contact')} "; }
+#header .dropdown:nth-child(4) .menu a[href*="/sitemap"]::before { content: "${dd('dd-sitemap')} "; }
+
+/* Cards / blurbs */
+li.blurb, fieldset, form dl, .work .wrapper,
+div#main.works-show.region .wrapper,
+div.user.home.profile dl.meta,
+dl.inspired.index.group dd.child,
+dl.inspired.index.group dd.parent {
+  background: linear-gradient(135deg, ${v('card-top')}, ${v('card-bot')});
+  border: 3px solid ${v('card-border')};
+  border-radius: ${v('card-radius')}px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+li.blurb { position: relative; }
+li.blurb .header::after {
+  content: "${v('blurb-icon')}";
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 18px;
+}
+
+/* Author gradient */
+.byline.heading a, .blurb .byline a, .work .byline a, .module .byline a,
+.comment h4.byline a, .thread .byline a {
+  font-style: italic !important;
+  background: linear-gradient(135deg, ${v('author-c1')}, ${v('author-c2')}) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  font-weight: 600;
+}
+
+/* Form elements */
+input, select, textarea {
+  background-color: ${v('input-bg')};
+  color: ${v('input-text')};
+  border-radius: ${v('input-radius')}px;
+  border: 2px solid ${v('input-border')};
+}
+input:focus, select:focus, textarea:focus {
+  background-color: ${v('input-bg')};
+  color: ${v('input-text')};
+  outline: 2px ${v('focus-style')} ${v('focus-color')};
+}
+input { width: 96%; background-image: none; }
+
+/* Errors / notices */
+.required, .error, .alert.flash { color: ${v('req-color')}; font-weight: 700; }
+fieldset .required, fieldset .error, fieldset .alert.flash { color: ${v('err-color')}; }
+.LV_invalid_field, input.LV_invalid_field:hover, textarea.LV_invalid_field:hover {
+  border: 2px dashed ${v('invalid-border')};
+}
+.notice, .comment_notice, .kudos_notice, ul.notes, .caution,
+.error, .comment_error, .kudos_error, .alert.flash {
+  background: ${v('notice-bg')};
+  border: 2px solid ${v('notice-border')};
+  border-radius: 12px;
+}
+
+/* Default tags */
+a.tag, a.tag:visited, a.tag:link {
+  display: inline-block;
+  padding: 5px 10px;
+  margin: 6px 2px;
+  border-radius: ${v('tag-radius')}px;
+  border: 2px solid ${v('def-border')};
+  background: linear-gradient(135deg, ${v('def-top')}, ${v('def-bot')});
+  color: ${v('def-text')};
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(232,232,232,0.3);
+}
+
+/* Character tags */
+.tags li.characters a.tag,
+div#main.works-show.region .tags li.characters a.tag {
+  background: linear-gradient(135deg, ${v('char-top')}, ${v('char-bot')}) !important;
+  border: 2px solid ${v('char-border')} !important;
+  color: ${v('char-text')} !important;
+  border-radius: ${v('tag-radius')}px;
+}
+.tags li.characters a.tag::before { content: "${v('char-emoji')} "; }
+
+/* Romantic tags */
+.tags li.relationships a.tag[href*="*s*"],
+div#main.works-show.region .tags li.relationships a.tag[href*="*s*"] {
+  background: linear-gradient(135deg, ${v('rom-top')}, ${v('rom-bot')}) !important;
+  border: 2px solid ${v('rom-border')} !important;
+  color: ${v('rom-text')} !important;
+  border-radius: ${v('tag-radius')}px;
+}
+.tags li.relationships a.tag[href*="*s*"]::before { content: "${v('rom-emoji')} "; }
+
+/* Platonic tags */
+.tags li.relationships a.tag[href*="*a*"],
+div#main.works-show.region .tags li.relationships a.tag[href*="*a*"] {
+  background: linear-gradient(135deg, ${v('plat-top')}, ${v('plat-bot')}) !important;
+  border: 2px solid ${v('plat-border')} !important;
+  color: ${v('plat-text')} !important;
+  border-radius: ${v('tag-radius')}px;
+}
+.tags li.relationships a.tag[href*="*a*"]::before { content: "${v('plat-emoji')} "; }
+
+/* Freeform tags */
+.tags li.freeforms a.tag,
+div#main.works-show.region .tags li.freeforms a.tag {
+  background: linear-gradient(135deg, ${v('free-top')}, ${v('free-bot')}) !important;
+  border: 2px solid ${v('free-border')} !important;
+  color: ${v('free-text')} !important;
+  border-radius: ${v('tag-radius')}px;
+}
+.tags li.freeforms a.tag::before { content: "${v('free-emoji')} "; }
+
+/* Required tag emojis */
+.required-tags .rating-general-audience, .required-tags .rating-teen,
+.required-tags .rating-mature, .required-tags .rating-explicit,
+.required-tags .rating-notrated, .required-tags .category-gen,
+.required-tags .category-het, .required-tags .category-slash,
+.required-tags .category-femslash, .required-tags .category-multi,
+.required-tags .category-other, .required-tags .category-none,
+.required-tags .warning-yes, .required-tags .warning-no,
+.required-tags .warning-choosenotto, .required-tags .complete-yes,
+.required-tags .complete-no, .required-tags .external-work {
+  background-image: none !important;
+  background: transparent !important;
+  width: auto !important; height: auto !important;
+  padding: 2px 6px !important;
+  border: none !important;
+  text-indent: 0 !important;
+}
+.required-tags .rating-general-audience::before { content: "${v('rt-general')} "; font-size: 14px; }
+.required-tags .rating-teen::before { content: "${v('rt-teen')} "; font-size: 14px; }
+.required-tags .rating-mature::before { content: "${v('rt-mature')} "; font-size: 14px; }
+.required-tags .rating-explicit::before { content: "${v('rt-explicit')} "; font-size: 14px; }
+.required-tags .rating-notrated::before { content: "${v('rt-notrated')} "; font-size: 14px; }
+.required-tags .category-gen::before { content: "${v('rt-gen')} "; font-size: 14px; }
+.required-tags .category-het::before { content: "${v('rt-het')} "; font-size: 14px; }
+.required-tags .category-slash::before { content: "${v('rt-slash')} "; font-size: 14px; }
+.required-tags .category-femslash::before { content: "${v('rt-femslash')} "; font-size: 14px; }
+.required-tags .category-multi::before { content: "${v('rt-multi')} "; font-size: 14px; }
+.required-tags .category-other::before { content: "${v('rt-other')} "; font-size: 14px; }
+.required-tags .category-none::before { content: "${v('rt-none')} "; font-size: 14px; }
+.required-tags .warning-yes::before { content: "${v('rt-warn-yes')} "; font-size: 14px; }
+.required-tags .warning-no::before { content: "${v('rt-warn-no')} "; font-size: 14px; }
+.required-tags .warning-choosenotto::before { content: "${v('rt-warn-cntw')} "; font-size: 14px; }
+.required-tags .complete-yes::before { content: "${v('rt-complete')} "; font-size: 14px; }
+.required-tags .complete-no::before { content: "${v('rt-wip')} "; font-size: 14px; }
+.required-tags .external-work::before { content: "${v('rt-external')} "; font-size: 14px; }
+
+/* Buttons */
+.listbox .index, form .notice, form ul.notes, form.verbose legend,
+.verbose form legend, .actions a, .actions a:link, .action, .action:link,
+input[type="submit"], button, .current, .actions label {
+  border: 2px solid ${v('btn-border')};
+  background: linear-gradient(135deg, ${v('btn-top')}, ${v('btn-bot')});
+  box-shadow: 0 3px 10px rgba(232,232,232,0.3);
+  border-radius: ${v('btn-radius')}px;
+  color: ${v('btn-text')};
+  font-weight: 600;
+  background-image: none;
+}
+.actions a:hover, .actions input:hover, .actions a:focus,
+.actions input:focus, label.action:hover, .action:hover, .action:focus {
+  background: linear-gradient(135deg, ${v('btn-hov-top')}, ${v('btn-hov-bot')});
+  color: ${v('btn-hov-text')};
+  border: 2px solid ${v('btn-border')};
+}
+.current, a.current, .current a:visited,
+#header .current, #outer .current {
+  background: linear-gradient(135deg, ${v('btn-act-top')}, ${v('btn-act-bot')});
+  color: ${v('btn-act-text')};
+  font-weight: 700;
+}
+
+/* Post new links */
+a[href*="/works/new"], a[href*="/chapters/new"],
+a[href*="/series/new"], a[href*="/collections/new"],
+#dashboard a[href$="/works/new"], #dashboard a[href$="/chapters/new"],
+#dashboard a[href$="/series/new"] {
+  color: ${v('new-color')} !important;
+  font-weight: 700 !important;
+  border-bottom: 2px solid ${v('new-underline')} !important;
+}
+a[href*="/works/new"]:hover, a[href*="/chapters/new"]:hover,
+a[href*="/series/new"]:hover, a[href*="/collections/new"]:hover {
+  color: ${v('new-hover')} !important;
+}
+
+/* Comments */
+.thread .odd, li.comment:nth-child(odd) {
+  background: linear-gradient(135deg, ${v('com-odd-top')}, ${v('com-odd-bot')}) !important;
+  border: 2px solid ${v('com-border')};
+  border-radius: ${v('com-radius')}px;
+}
+.thread .even, li.comment:nth-child(even) {
+  background: linear-gradient(135deg, ${v('com-even-top')}, ${v('com-even-bot')}) !important;
+  border: 2px solid ${v('com-border')};
+  border-radius: ${v('com-radius')}px;
+}
+.comment h4.byline { color: ${v('com-author')} !important; }
+.comment h4.byline .posted { color: ${v('com-date')}; }
+.comment ul.actions a {
+  background: linear-gradient(135deg, ${v('com-act-top')}, ${v('com-act-bot')});
+  border: 1px solid ${v('com-act-border')};
+  color: ${v('com-act-text')};
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 0.9em;
+}
+
+/* Work content */
+div.work div.userstuff.module,
+div#main.works-show.region div.userstuff {
+  max-width: ${v('work-maxw')}px;
+  margin-left: auto;
+  margin-right: auto;
+  background: ${v('work-bg')};
+  padding: 20px;
+  border-radius: ${v('work-radius')}px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+${document.getElementById('dropcap-enabled').checked
+  ? `.userstuff p:first-of-type::first-letter {\n  font-size: ${v('dropcap-size')}em;\n  color: ${v('dropcap-color')};\n  font-weight: 700;\n}`
+  : '/* drop cap disabled */'}
+.userstuff blockquote {
+  background: ${v('bq-bg')};
+  border-left: 4px solid ${v('bq-border')};
+  border-radius: 0 12px 12px 0;
+  padding: 12px 16px;
+  margin: 15px 0;
+  position: relative;
+}
+.userstuff blockquote::before {
+  content: "${v('bq-emoji')}";
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 16px;
+}
+
+/* Stats */
+dl.stats {
+  background: linear-gradient(135deg, ${v('st-top')}, ${v('st-bot')});
+  border: 2px solid ${v('st-border')};
+  border-radius: 12px;
+  padding: 8px;
+}
+dl.stats dt:not(.skins dl.stats dt) { display: none; }
+dl.stats dd.language::before { content: "${v('si-lang')}"; }
+dl.stats dd.words::before { content: "${v('si-words')}"; }
+dl.stats dd.chapters::before { content: "${v('si-chap')}"; }
+dl.stats dd.comments::before { content: "${v('si-comments')}"; }
+dl.stats dd.kudos::before { content: "${v('si-kudos')}"; }
+dl.stats dd.bookmarks::before,
+dl.stats dd:has(a[href$=bookmarks])::before { content: "${v('si-bookmarks')}"; }
+dl.stats dd.hits::before { content: "${v('si-hits')}"; }
+dl.stats dd.works::before { content: "${v('si-works')}"; }
+dl.work dl.stats dd.published::before { content: "${v('si-published')}"; }
+dl.work dl.stats dd.status::before { content: "${v('si-updated')}"; }
+dl.stats dd.collections::before { content: "${v('si-collections')}"; }
+dl.stats dd:has(a[href$=fandoms])::before { content: "${v('si-fandoms')}"; }
+.statistics dl.stats dd.subscriptions::before { content: "${v('si-subs')}"; }
+dl.stats dd:has(a[href$=requests])::before { content: "${v('si-requests')}"; }
+#stat_chart {
+  filter: hue-rotate(${v('chart-hue')}deg) brightness(${v('chart-bright')}%) sepia(${v('chart-sepia')}%);
+  margin-bottom: 2em;
+}
+
+/* Filters */
+.filters .expander { color: ${v('exp-color')}; font-weight: 600; }
+.filters .expander::after { content: " ${v('exp-closed')}"; color: ${v('exp-color')}; font-size: 12px; }
+.filters .expanded .expander::after { content: " ${v('exp-open')}"; color: ${v('exp-color')}; font-size: 12px; }
+.filters .indicator::before {
+  background: ${v('chk-bg')};
+  border: 2px solid ${v('chk-border')};
+  border-radius: 6px;
+  background-image: none;
+}
+.filters [type="checkbox"]:checked + .indicator::before {
+  background: ${v('chk-checked-bg')};
+  border-color: ${v('chk-checked-border')};
+  background-image: none;
+}
+
+/* Dashboard */
+#dashboard, #dashboard.own {
+  background: linear-gradient(135deg, ${v('dash-top')}, ${v('dash-bot')});
+  border: 2px solid ${v('dash-border')};
+  border-radius: 0 15px 15px 0;
+}
+#dashboard .current {
+  background: ${v('dash-cur-bg')};
+  color: ${v('dash-cur-text')};
+  border-radius: 8px;
+  font-weight: 700;
+}
+.secondary {
+  background: linear-gradient(135deg, ${v('dash-top')}, ${v('dash-bot')});
+  border: 2px solid ${v('dash-border')};
+  border-radius: 12px;
+}
+
+/* Footer */
+#outer #footer, #footer {
+  background: ${v('foot-bg')};
+  border-top: 3px solid ${v('foot-border')};
+  color: ${v('foot-text')};
+}
+#footer a, #footer .group .heading, #footer li { color: ${v('foot-link')}; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { background: ${v('scroll-track')}; border-radius: 10px; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, ${v('scroll-top')}, ${v('scroll-bot')});
+  border-radius: 10px;
+  border: 2px solid ${v('scroll-border')};
+}
+
+/* Modals */
+#modal {
+  background: ${v('modal-bg')};
+  border: 4px solid ${v('modal-border')};
+  border-radius: ${v('modal-radius')}px;
+}
+
+/* Dropdowns */
+.autocomplete div.dropdown ul, .dropdown {
+  background: ${v('drop-bg')};
+  border: 2px solid ${v('drop-border')};
+  border-radius: 12px;
+}
+.autocomplete .dropdown ul li:hover,
+.autocomplete .dropdown li.selected { background: ${v('drop-hover')}; }
+`;
+  document.getElementById('css-output').value=css;
+}
+
+// ── EVENT WIRING ──────────────────────────────────────────────────────────
+function syncHex(picker){
+  const h=document.getElementById(picker.id+'-hex');
+  if(h) h.value=picker.value;
+}
+function syncPicker(hex){
+  const p=document.getElementById(hex.id.replace('-hex',''));
+  if(p && /^#[0-9a-fA-F]{6}$/.test(hex.value)) p.value=hex.value;
+}
+
+document.querySelectorAll('input[type=color]').forEach(el=>{
+  el.addEventListener('input',function(){syncHex(this);renderAll();});
+});
+document.querySelectorAll('input[type=text]').forEach(el=>{
+  el.addEventListener('input',function(){
+    if(this.id.endsWith('-hex')) syncPicker(this);
+    renderAll();
+  });
+});
+document.querySelectorAll('input[type=number],select,input[type=checkbox]').forEach(el=>{
+  el.addEventListener('input',renderAll);
+  el.addEventListener('change',renderAll);
+});
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+  });
+});
+document.querySelectorAll('.prev-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.prev-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.pview').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('pv-'+tab.dataset.pv).classList.add('active');
+  });
+});
+
+document.getElementById('gen-btn').addEventListener('click',()=>{
+  generateCSS();
+  document.getElementById('css-output').focus();
+  document.getElementById('css-output').select();
+});
+document.getElementById('copy-btn').addEventListener('click',()=>{
+  const ta=document.getElementById('css-output');
+  if(!ta.value.trim()){alert('Click "generate css" first!');return;}
+  ta.select();ta.setSelectionRange(0,999999);
+  let ok=false;
+  try{ok=document.execCommand('copy');}catch(e){}
+  if(!ok&&navigator.clipboard){navigator.clipboard.writeText(ta.value).catch(()=>{});ok=true;}
+  const b=document.getElementById('copy-btn');
+  b.textContent=ok?'copied!':'select all + copy manually';
+  setTimeout(()=>b.textContent='copy',2500);
+});
+document.getElementById('dl-btn').addEventListener('click',()=>{
+  const css=document.getElementById('css-output').value;
+  if(!css.trim()){alert('Click "generate css" first!');return;}
+  const blob=new Blob([css],{type:'text/css'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='ao3-skin.css';
+  a.click();URL.revokeObjectURL(a.href);
+});
+
+// ── DEFAULTS ──────────────────────────────────────────────────────────────
+const LD={
+  'bg-top':'#fefefe','bg-mid':'#f8f8f8','bg-bot':'#f0f0f0',
+  'text-main':'#333333','text-heading':'#1e3a5f','text-link':'#1e3a5f','text-visited':'#6b4f9c',
+  'font-primary':'"Georgia","Times New Roman",serif',
+  'user-color':'#d64545','user-icon-border':'#d64545',
+  'logo-top':'#ffffff','logo-bot':'#f8f8f8','logo-border':'#e8e8e8',
+  'hdr-top':'#ffffff','hdr-bot':'#f8f8f8','hdr-border':'#e8e8e8',
+  'nav-fandoms':'🎬','nav-browse':'📂','nav-search':'🔍','nav-faq':'ℹ️',
+  'dd-media':'🌍','dd-anime':'🖊️','dd-books':'📚','dd-cartoons':'🖍️','dd-celeb':'⭐','dd-movies':'🎬','dd-music':'🎵','dd-other':'📱','dd-theater':'🎭','dd-tv':'📺','dd-games':'🎮','dd-uncat':'❓',
+  'dd-works':'📄','dd-bookmarks':'🔖','dd-tags':'🏷️','dd-collections':'📂','dd-people':'👥',
+  'dd-wsearch':'🔎','dd-bsearch':'🔖','dd-tsearch':'🏷️','dd-psearch':'👤',
+  'dd-faq':'❓','dd-donate':'💝','dd-news':'📰','dd-opendoors':'🚪','dd-tos':'📜','dd-contact':'📧','dd-sitemap':'🗺️',
+  'def-top':'#ffffff','def-bot':'#f8f8f8','def-border':'#e8e8e8','def-text':'#333333','tag-radius':'20',
+  'char-emoji':'👤','char-top':'#e8f5e8','char-bot':'#c9e6c9','char-border':'#8fbc8f','char-text':'#2e4e2e',
+  'rom-emoji':'❤️','rom-top':'#ffeaea','rom-bot':'#ffc9c9','rom-border':'#e6a0a0','rom-text':'#8b0000',
+  'plat-emoji':'🤝','plat-top':'#fff9e6','plat-bot':'#f0e0a0','plat-border':'#f0c864','plat-text':'#8b7500',
+  'free-emoji':'🏷️','free-top':'#f8f4e8','free-bot':'#e8e0d0','free-border':'#d8d0c0','free-text':'#654321',
+  'rt-general':'🆒','rt-teen':'🆗','rt-mature':'🛑','rt-explicit':'🔞','rt-notrated':'❓',
+  'rt-gen':'🤗','rt-het':'👩‍❤️‍💋‍👨','rt-slash':'👨‍❤️‍💋‍👨','rt-femslash':'👩‍❤️‍💋‍👩','rt-multi':'🥰','rt-other':'❓','rt-none':'⬛',
+  'rt-warn-yes':'⚠️','rt-warn-no':'✅','rt-warn-cntw':'❓','rt-complete':'✅','rt-wip':'⏳','rt-external':'🔗',
+  'card-top':'#ffffff','card-bot':'#f8f8f8','card-border':'#e8e8e8','card-radius':'15',
+  'author-c1':'#ff6b6b','author-c2':'#ffd93d','blurb-icon':'📖',
+  'input-bg':'#ffffff','input-text':'#333333','input-border':'#e8e8e8','input-radius':'10',
+  'focus-color':'#cccccc','focus-style':'dotted',
+  'req-color':'#b33939','err-color':'#d64545','invalid-border':'#d64545',
+  'notice-bg':'#f8f8f8','notice-border':'#e8e8e8',
+  'btn-top':'#f8f8f8','btn-bot':'#f0f0f0','btn-text':'#333333','btn-border':'#e8e8e8','btn-radius':'12',
+  'btn-hov-top':'#e8e8e8','btn-hov-bot':'#f0f0f0','btn-hov-text':'#1e3a5f',
+  'btn-act-top':'#e8e8e8','btn-act-bot':'#d8d8d8','btn-act-text':'#333333',
+  'new-color':'#d64545','new-underline':'#ff6b6b','new-hover':'#ff0000',
+  'com-odd-top':'#ffffff','com-odd-bot':'#f8f8f8','com-even-top':'#f8f8f8','com-even-bot':'#f0f0f0',
+  'com-border':'#e8e8e8','com-radius':'15','com-author':'#1e3a5f','com-date':'#6b4f9c',
+  'com-act-top':'#f8f8f8','com-act-bot':'#f0f0f0','com-act-border':'#e8e8e8','com-act-text':'#1e3a5f',
+  'work-bg':'#ffffff','work-maxw':'800','work-radius':'15',
+  'dropcap-color':'#1e3a5f','dropcap-size':'1.5',
+  'bq-emoji':'❝','bq-border':'#e8e8e8','bq-bg':'#f8f8f8',
+  'st-top':'#ffffff','st-bot':'#f8f8f8','st-border':'#e8e8e8',
+  'si-lang':'🌐','si-words':'📝','si-chap':'📖','si-comments':'💬','si-kudos':'⭐','si-bookmarks':'🔖','si-hits':'👁️','si-works':'📄','si-published':'📅','si-updated':'🔄','si-collections':'📂','si-fandoms':'🎬','si-subs':'🔔','si-requests':'💌',
+  'chart-bar':'#990000','chart-hue':'0','chart-bright':'110','chart-sepia':'10',
+  'exp-color':'#1e3a5f','exp-closed':'▼','exp-open':'▲',
+  'chk-bg':'#ffffff','chk-border':'#e8e8e8','chk-checked-bg':'#d8d8d8','chk-checked-border':'#c8c8c8',
+  'dash-top':'#ffffff','dash-bot':'#f8f8f8','dash-border':'#e8e8e8','dash-cur-bg':'#e8e8e8','dash-cur-text':'#333333',
+  'foot-bg':'#f8f8f8','foot-border':'#e8e8e8','foot-text':'#333333','foot-link':'#1e3a5f',
+  'scroll-track':'#f0f0f0','scroll-top':'#e8e8e8','scroll-bot':'#d8d8d8','scroll-border':'#f0f0f0',
+  'modal-bg':'#ffffff','modal-border':'#e8e8e8','modal-radius':'20',
+  'drop-bg':'#ffffff','drop-border':'#e8e8e8','drop-hover':'#f0f0f0',
+};
+const DD={...LD,
+  'bg-top':'#1a1a1f','bg-mid':'#1e1e25','bg-bot':'#22222a',
+  'text-main':'#e0e0e8','text-heading':'#7aacdc','text-link':'#7aacdc','text-visited':'#b39ddb',
+  'user-color':'#ff6b8a','user-icon-border':'#ff2d55',
+  'logo-top':'#1e1e25','logo-bot':'#252530','logo-border':'#3a3a4a',
+  'hdr-top':'#252530','hdr-bot':'#2a2a38','hdr-border':'#3a3a4a',
+  'def-top':'#1e1e28','def-bot':'#1e1e28','def-border':'#2e2e3e','def-text':'#7070a0',
+  'char-top':'#071a16','char-bot':'#071a16','char-border':'#2ec4a0','char-text':'#2ec4a0',
+  'rom-top':'#1a0610','rom-bot':'#1a0610','rom-border':'#f2506e','rom-text':'#f2506e',
+  'plat-top':'#191200','plat-bot':'#191200','plat-border':'#ffd166','plat-text':'#ffd166',
+  'free-top':'#1e1e2e','free-bot':'#1e1e2e','free-border':'#44446a','free-text':'#8888bb',
+  'card-top':'#1e1e25','card-bot':'#252530','card-border':'#3a3a4a',
+  'author-c1':'#ff6b6b','author-c2':'#ffd93d',
+  'input-bg':'#252530','input-text':'#e0e0e8','input-border':'#3a3a4a',
+  'focus-color':'#4a4a6a',
+  'req-color':'#ff6b8a','err-color':'#ff4d72','invalid-border':'#ff6b8a',
+  'notice-bg':'#252530','notice-border':'#3a3a4a',
+  'btn-top':'#2a2a38','btn-bot':'#252530','btn-text':'#e0e0e8','btn-border':'#3a3a4a',
+  'btn-hov-top':'#333345','btn-hov-bot':'#2e2e3e','btn-hov-text':'#00e5ff',
+  'btn-act-top':'#2e2e3e','btn-act-bot':'#333345','btn-act-text':'#e0e0e8',
+  'new-color':'#ff6b8a','new-underline':'#ff2d55','new-hover':'#ff2d55',
+  'com-odd-top':'#1e1e25','com-odd-bot':'#252530','com-even-top':'#22222a','com-even-bot':'#2a2a38',
+  'com-border':'#3a3a4a','com-author':'#7aacdc','com-date':'#b39ddb',
+  'com-act-top':'#252530','com-act-bot':'#2a2a38','com-act-border':'#3a3a4a','com-act-text':'#7aacdc',
+  'work-bg':'#1e1e25','dropcap-color':'#7aacdc',
+  'bq-border':'#3a3a4a','bq-bg':'#252530',
+  'st-top':'#1e1e25','st-bot':'#252530','st-border':'#3a3a4a',
+  'chart-bar':'#2ec4a0','chart-hue':'180','chart-bright':'90','chart-sepia':'20',
+  'exp-color':'#7aacdc',
+  'chk-bg':'#252530','chk-border':'#3a3a4a','chk-checked-bg':'#2e2e3e','chk-checked-border':'#4a4a6a',
+  'dash-top':'#1e1e25','dash-bot':'#252530','dash-border':'#3a3a4a','dash-cur-bg':'#2e2e3e','dash-cur-text':'#e0e0e8',
+  'foot-bg':'#1a1a1f','foot-border':'#3a3a4a','foot-text':'#c0c8e0','foot-link':'#7aacdc',
+  'scroll-track':'#1a1a1f','scroll-top':'#2e2e3e','scroll-bot':'#3a3a4a','scroll-border':'#1a1a1f',
+  'modal-bg':'#1e1e25','modal-border':'#3a3a4a',
+  'drop-bg':'#1e1e25','drop-border':'#3a3a4a','drop-hover':'#2e2e3e',
+};
+
+function applyDefaults(defs){
+  for(const[id,val] of Object.entries(defs)){
+    const el=document.getElementById(id);
+    if(!el)continue;
+    el.value=val;
+    const hex=document.getElementById(id+'-hex');
+    if(hex)hex.value=val;
+  }
+  document.getElementById('dropcap-enabled').checked=true;
+  renderAll();
+}
+function loadLight(){applyDefaults(LD);}
+function loadDark(){applyDefaults(DD);}
+document.getElementById('reset-btn').addEventListener('click',loadLight);
+loadLight();
+</script>
+</body>
+</html>
